@@ -1,10 +1,20 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.10;
 
+
+///TODO///
+// function to add and remove stakeholder
+// function to add and remove teacher
+// upload of csv and conversion to array
+// pause & unpause contract
+// function to remove director
+
+
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
 contract ZuriSchool {
     
+    // STRUCT
     /// @notice structure for stakeholders
     struct Stakeholder {
         bool isRegistered;
@@ -18,6 +28,7 @@ contract ZuriSchool {
         uint voteCount; 
     }
 
+    // ENUM
     /// @notice voting process
     enum VotingProcess {
         RegisteredStakeholders, 
@@ -37,8 +48,14 @@ contract ZuriSchool {
     /// @notice declare state variable chairman
     address public chairman;
 
+    /// @notice declare state variable director
+    address public director;
+
     /// @notice mapping for list of stakeholders
     mapping(address => Stakeholder) public stakeholders;
+
+    /// @notice mapping for list of directors
+    mapping(address => bool) public directors;
 
     /// @notice array for candidates
     Candidate[] public candidates;
@@ -46,6 +63,7 @@ contract ZuriSchool {
     /// @dev id of winner
     uint private winningCandidateId;
 
+    // MODIFIER
     /// @notice modifier to check that only teachers can call a function
     modifier onlyTeacher() {
 
@@ -127,6 +145,14 @@ contract ZuriSchool {
        _;
     }
     
+    //modifier to ensure only directors can call selected functions.
+    modifier isDirector(address _user) {
+        bool isdirector = directors[_user];
+        require(isdirector, "Only Directors have Access!");
+        _;
+    }
+
+    // EVENTS
     /// @notice emit when stakeholder resisters
     event StakeholderRegisteredEvent (
             address stakeholderAddress
@@ -163,6 +189,13 @@ contract ZuriSchool {
        VotingProcess previousStatus,
        VotingProcess newStatus
     );
+
+    /// @notice emit when director is appointed
+    event AppointDirector (address adder, address newDirector);
+
+    /// @notice emit when director is removed
+    event RemoveDirector(address remover, address oldDirector);
+    
     
     constructor() {
         chairman = msg.sender;
@@ -205,25 +238,29 @@ contract ZuriSchool {
     }
     
     /// @notice retrieve candidates number
-     function getCandidatesNumber() public view
-         returns (uint) {
-         return candidates.length;
-     }
-     
-     function getCandidateName(uint index) public view 
-         returns (string memory) {
-         return candidates[index].name;
-     }    
+    function getCandidatesNumber() public view
+        returns (uint) {
+        return candidates.length;
+    }
+    
+    /// @notice retrieve candidate information 
+    function getCandidateName(uint index) public view 
+        returns (string memory) {
+        return candidates[index].name;
+    }    
 
+    /// @notice start voting session
     function startVotingSession() 
         public onlyChairman onlyAfterCandidatesRegistration {
         votingProcess = VotingProcess.VotingStarted;
         
+
         emit VotingStartedEvent();
         emit VotingProcessChangeEvent(
             VotingProcess.CandidatesRegistrationEnded, votingProcess);
     }
     
+    /// @notice end voting session
     function endVotingSession() 
         public onlyChairman onlyDuringVotingSession {
         votingProcess = VotingProcess.VotingEnded;
@@ -232,6 +269,7 @@ contract ZuriSchool {
         emit VotingProcessChangeEvent(
             VotingProcess.VotingStarted, votingProcess);        
     }
+
 
     function vote(uint candidateId) 
         onlyRegisteredStakeholder 
@@ -316,5 +354,14 @@ contract ZuriSchool {
         stakeholders[_stakeholderAddress].votedCandidateId = 0;
         
         emit StakeholderRegisteredEvent(_stakeholderAddress);
+    }
+
+    /// @notice add a director
+    function assignDirector(address _newDirector) 
+        public onlyChairman {
+        directors[_newDirector] = true;
+        
+        /// @notice emit event of new director
+        emit AppointDirector(msg.sender, _newDirector);
     }
 }

@@ -283,7 +283,6 @@ contract ZuriSchool {
             VotingProcess.VotingStarted, votingProcess);        
     }
 
-
     function vote(uint candidateId) 
         onlyRegisteredStakeholder 
         onlyDuringVotingSession public {
@@ -378,54 +377,41 @@ contract ZuriSchool {
         emit AppointDirector(msg.sender, _newDirector);
     }
 
+    function fetchElection() public view returns (Candidate[] memory) {
+    
+        uint currentIndex = 0;
 
-function fetchElection() public view returns (Candidate[] memory) {
-   
-    uint currentIndex = 0;
- 
+        Candidate[] memory items = new Candidate[](candidatesCount);
+            for (uint i = 0; i < candidatesCount; i++) {
+                
+                    uint currentId = candidates[i + 1].id;
+                    Candidate storage currentItem = candidates[currentId];
+                    items[currentIndex] = currentItem;
+                    currentIndex += 1;
+            }
+                return items;
+            }
 
- Candidate[] memory items = new Candidate[](candidatesCount);
-        for (uint i = 0; i < candidatesCount; i++) {
-            
-                uint currentId = candidates[i + 1].id;
-                Candidate storage currentItem = candidates[currentId];
-                items[currentIndex] = currentItem;
-                currentIndex += 1;
-            
-        }
-        return items;
-
-    }
-
-       function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
+    function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
         uint winningVoteCount = 0;
         uint totalVotes=0;
         uint winningCandidateIndex = 0;
         Candidate[] memory items = new Candidate[](candidatesCount);
-       
-for (uint i = 0; i < candidatesCount; i++) {
-
-     
-       if (keccak256(abi.encodePacked(candidates[i + 1].position)) == keccak256(abi.encodePacked(_position))) {
-        totalVotes += candidates[i + 1].voteCount;
-
-
-        
-        if ( candidates[i + 1].voteCount > winningVoteCount) {
-            
-                    winningVoteCount = candidates[i + 1].voteCount;
-                     uint currentId = candidates[i + 1].id;
-               // winningCandidateIndex = i;
-                Candidate storage currentItem = candidates[currentId];
-                items[winningCandidateIndex] = currentItem;
-                winningCandidateIndex += 1;
-          }
-                
-
-
-       }
-    return (totalVotes, winningVoteCount, items);
-    }
     
+        for (uint i = 0; i < candidatesCount; i++) {
+            if (keccak256(abi.encodePacked(candidates[i + 1].position)) == keccak256(abi.encodePacked(_position))) {
+                totalVotes += candidates[i + 1].voteCount;        
+                if ( candidates[i + 1].voteCount > winningVoteCount) {
+                    
+                    winningVoteCount = candidates[i + 1].voteCount;
+                    uint currentId = candidates[i + 1].id;
+                    // winningCandidateIndex = i;
+                    Candidate storage currentItem = candidates[currentId];
+                    items[winningCandidateIndex] = currentItem;
+                    winningCandidateIndex += 1;
+                }
+            }
+                return (totalVotes, winningVoteCount, items);
+            }   
+        }
     }
-}

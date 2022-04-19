@@ -59,6 +59,8 @@ contract ZuriSchool {
     /// @notice mapping for list of directors
     mapping(address => bool) public directors;
 
+       uint public candidatesCount;
+
    
 
        /// @notice array for candidates
@@ -240,14 +242,13 @@ contract ZuriSchool {
     }
     
     /// @notice store candidates information
-    function registerCandidate(string memory candidateName) 
-        public onlyRegisteredStakeholder onlyDuringCandidatesRegistration {
-        candidates.push(Candidate({
-            name: candidateName,
-            voteCount: 0
-        }));
+    function registerCandidate(string memory candidateName, string memory candidatePosition) 
+        public onlyAccess {
+         candidatesCount++;
+        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, candidatePosition, 0 );
         
-        emit CandidateRegisteredEvent(candidates.length - 1);
+        
+        emit CandidateRegisteredEvent(candidatesCount);
     }
     
     // /// @notice retrieve candidates number

@@ -24,7 +24,9 @@ contract ZuriSchool {
 
     /// @notice structure for candidates
     struct Candidate {
+        uint   id;
         string name;   
+        string position;
         uint voteCount; 
     }
 
@@ -57,8 +59,10 @@ contract ZuriSchool {
     /// @notice mapping for list of directors
     mapping(address => bool) public directors;
 
-    /// @notice array for candidates
-    Candidate[] public candidates;
+   
+
+       /// @notice array for candidates
+  mapping(uint => Candidate) public candidates;
 
     /// @dev id of winner
     uint private winningCandidateId;
@@ -82,6 +86,15 @@ contract ZuriSchool {
         _;
     }
     
+ /// @notice modifier to check that only the chairman or teacher can call a function
+    modifier onlyAccess() {
+
+        /// @notice check that sender is the chairman
+        require(msg.sender == chairman || msg.sender == teacher, 
+        "Access granted to only the chairman");
+        _;
+    }
+
     /// @notice modifier to check that only the registered stakeholders can call a function
     modifier onlyRegisteredStakeholder() {
 
@@ -363,5 +376,56 @@ contract ZuriSchool {
         
         /// @notice emit event of new director
         emit AppointDirector(msg.sender, _newDirector);
+    }
+
+
+function fetchElection() public view returns (Candidate[] memory) {
+   
+    uint currentIndex = 0;
+ 
+
+ Candidate[] memory items = new Candidate[](candidatesCount);
+        for (uint i = 0; i < candidatesCount; i++) {
+            
+                uint currentId = candidates[i + 1].id;
+                Candidate storage currentItem = candidates[currentId];
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+            
+        }
+        return items;
+
+    }
+
+       function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
+        uint winningVoteCount = 0;
+        uint totalVotes=0;
+        uint winningCandidateIndex = 0;
+        Candidate[] memory items = new Candidate[](candidatesCount);
+       
+for (uint i = 0; i < candidatesCount; i++) {
+
+     
+       if (keccak256(abi.encodePacked(candidates[i + 1].position)) == keccak256(abi.encodePacked(_position))) {
+        totalVotes += candidates[i + 1].voteCount;
+
+
+        
+        if ( candidates[i + 1].voteCount > winningVoteCount) {
+            
+                    winningVoteCount = candidates[i + 1].voteCount;
+                     uint currentId = candidates[i + 1].id;
+               // winningCandidateIndex = i;
+                Candidate storage currentItem = candidates[currentId];
+                items[winningCandidateIndex] = currentItem;
+                winningCandidateIndex += 1;
+          }
+                
+
+
+       }
+    return (totalVotes, winningVoteCount, items);
+    }
+    
     }
 }

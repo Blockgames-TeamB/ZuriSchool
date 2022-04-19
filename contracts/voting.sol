@@ -4,7 +4,8 @@ pragma solidity ^0.8.10;
 
 ///TODO///
 // function to add and remove stakeholder
-// function to add and remove teacher
+// function to remove teacher
+// function to remove director
 // upload of csv and conversion to array
 // pause & unpause contract
 // function to remove director
@@ -29,6 +30,7 @@ contract ZuriSchool {
         string position;
         uint voteCount; 
     }
+
 
     // ENUM
     /// @notice voting process
@@ -59,15 +61,18 @@ contract ZuriSchool {
     /// @notice mapping for list of directors
     mapping(address => bool) public directors;
 
-       uint public candidatesCount;
+    /// @notice mapping for list of directors
+    uint public candidatesCount;
 
-   
+    /// @notice mapping for list of teachers
+    mapping(address => bool) public teachers;
 
-       /// @notice array for candidates
-  mapping(uint => Candidate) public candidates;
+    /// @notice array for candidates
+    mapping(uint => Candidate) public candidates;
 
     /// @dev id of winner
     uint private winningCandidateId;
+
 
     // MODIFIER
     /// @notice modifier to check that only teachers can call a function
@@ -88,7 +93,7 @@ contract ZuriSchool {
         _;
     }
     
- /// @notice modifier to check that only the chairman or teacher can call a function
+    /// @notice modifier to check that only the chairman or teacher can call a function
     modifier onlyAccess() {
 
         /// @notice check that sender is the chairman
@@ -210,7 +215,12 @@ contract ZuriSchool {
 
     /// @notice emit when director is removed
     event RemoveDirector(address remover, address oldDirector);
-    
+
+    /// @notice emit when teacher is appointed
+    event AppointTeacher (address adder, address newTeacher);
+
+    /// @notice emit when teacher is removed
+    event RemoveTeacher(address remover, address oldTeacherr);    
     
     constructor() {
         chairman = msg.sender;
@@ -223,7 +233,7 @@ contract ZuriSchool {
         /// @dev function can only be called by chairman
         /// @dev function can only be called by teachers
         /// @dev function can only be called during the registration of stakeholder
-        public onlyTeacher onlyChairman onlyDuringStakeholdersRegistration {
+        public onlyAccess {
         votingProcess = VotingProcess.CandidatesRegistrationStarted;
         
         emit CandidatesRegistrationStartedEvent();
@@ -247,25 +257,12 @@ contract ZuriSchool {
          candidatesCount++;
         candidates[candidatesCount] = Candidate(candidatesCount, candidateName, candidatePosition, 0 );
         
-        
         emit CandidateRegisteredEvent(candidatesCount);
     }
-    
-    /// @notice retrieve candidates number
-    function getCandidatesNumber() public view
-        returns (uint) {
-        return candidates.length;
-    }
-    
-    /// @notice retrieve candidate information 
-    function getCandidateName(uint index) public view 
-        returns (string memory) {
-        return candidates[index].name;
-    }    
 
     /// @notice start voting session
     function startVotingSession() 
-        public onlyChairman onlyAfterCandidatesRegistration {
+        public onlyAccess {
         votingProcess = VotingProcess.VotingStarted;
         
 
@@ -276,14 +273,13 @@ contract ZuriSchool {
     
     /// @notice end voting session
     function endVotingSession() 
-        public onlyChairman onlyDuringVotingSession {
+        public onlyAccess {
         votingProcess = VotingProcess.VotingEnded;
         
         emit VotingEndedEvent();
         emit VotingProcessChangeEvent(
             VotingProcess.VotingStarted, votingProcess);        
     }
-
 
     function vote(uint candidateId) 
         onlyRegisteredStakeholder 
@@ -298,29 +294,7 @@ contract ZuriSchool {
 
         emit VotedEvent(msg.sender, candidateId);
     }
-
-    function countVotes() onlyChairman onlyTeacher onlyAfterVotingSession public {
-        uint winningVoteCount = 0;
-        uint winningCandidateIndex = 0;
         
-        for (
-            uint i = 0;
-            i < candidates.length;
-            i++) {
-            if (candidates[i].voteCount > winningVoteCount) {
-                winningVoteCount = candidates[i].voteCount;
-                winningCandidateIndex = i;
-            }
-        }
-        
-        winningCandidateId = winningCandidateIndex;
-        votingProcess = VotingProcess.VotesCounted;
-        
-        emit VotesCountedEvent();
-        emit VotingProcessChangeEvent(
-            VotingProcess.VotingEnded, votingProcess);     
-    }
-    
     function getWinningCandidateId() onlyAfterVotesCounted public view
        returns (uint) {
        return winningCandidateId;
@@ -358,10 +332,10 @@ contract ZuriSchool {
     }
     
     function registerStakeholder(address _stakeholderAddress) 
-        public onlyTeacher onlyChairman onlyDuringStakeholdersRegistration {
+        public onlyAccess {
         
         require(!stakeholders[_stakeholderAddress].isRegistered, 
-           "the stakeholder is already registered");
+           "the stakeholder is already registered"); 
         
         stakeholders[_stakeholderAddress].isRegistered = true;
         stakeholders[_stakeholderAddress].hasVoted = false;
@@ -379,54 +353,50 @@ contract ZuriSchool {
         emit AppointDirector(msg.sender, _newDirector);
     }
 
-
-function fetchElection() public view returns (Candidate[] memory) {
-   
-    uint currentIndex = 0;
- 
-
- Candidate[] memory items = new Candidate[](candidatesCount);
-        for (uint i = 0; i < candidatesCount; i++) {
-            
-                uint currentId = candidates[i + 1].id;
-                Candidate storage currentItem = candidates[currentId];
-                items[currentIndex] = currentItem;
-                currentIndex += 1;
-            
-        }
-        return items;
-
+    /// @notice add a teacher
+    function assignTeacher(address _newTeacher) 
+        public onlyChairman {
+        teachers[_newTeacher] = true;
+        
+        /// @notice emit event of new teacher
+        emit AppointTeacher(msg.sender, _newTeacher);
     }
 
-       function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
+    function fetchElection() public view returns (Candidate[] memory) {
+    
+        uint currentIndex = 0;
+
+        Candidate[] memory items = new Candidate[](candidatesCount);
+            for (uint i = 0; i < candidatesCount; i++) {
+                
+                    uint currentId = candidates[i + 1].id;
+                    Candidate storage currentItem = candidates[currentId];
+                    items[currentIndex] = currentItem;
+                    currentIndex += 1;
+            }
+                return items;
+            }
+
+    function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
         uint winningVoteCount = 0;
         uint totalVotes=0;
         uint winningCandidateIndex = 0;
         Candidate[] memory items = new Candidate[](candidatesCount);
-       
-for (uint i = 0; i < candidatesCount; i++) {
-
-     
-       if (keccak256(abi.encodePacked(candidates[i + 1].position)) == keccak256(abi.encodePacked(_position))) {
-        totalVotes += candidates[i + 1].voteCount;
-
-
-        
-        if ( candidates[i + 1].voteCount > winningVoteCount) {
-            
-                    winningVoteCount = candidates[i + 1].voteCount;
-                     uint currentId = candidates[i + 1].id;
-               // winningCandidateIndex = i;
-                Candidate storage currentItem = candidates[currentId];
-                items[winningCandidateIndex] = currentItem;
-                winningCandidateIndex += 1;
-          }
-                
-
-
-       }
-    return (totalVotes, winningVoteCount, items);
-    }
     
+        for (uint i = 0; i < candidatesCount; i++) {
+            if (keccak256(abi.encodePacked(candidates[i + 1].position)) == keccak256(abi.encodePacked(_position))) {
+                totalVotes += candidates[i + 1].voteCount;        
+                if ( candidates[i + 1].voteCount > winningVoteCount) {
+                    
+                    winningVoteCount = candidates[i + 1].voteCount;
+                    uint currentId = candidates[i + 1].id;
+                    // winningCandidateIndex = i;
+                    Candidate storage currentItem = candidates[currentId];
+                    items[winningCandidateIndex] = currentItem;
+                    winningCandidateIndex += 1;
+                }
+            }
+                return (totalVotes, winningVoteCount, items);
+            }   
+        }
     }
-}

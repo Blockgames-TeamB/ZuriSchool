@@ -237,17 +237,17 @@ contract ZuriSchool {
         emit CandidateRegisteredEvent(candidates.length - 1);
     }
     
-    /// @notice retrieve candidates number
-    function getCandidatesNumber() public view
-        returns (uint) {
-        return candidates.length;
-    }
+    // /// @notice retrieve candidates number
+    // function getCandidatesNumber() public view
+    //     returns (uint) {
+    //     return candidates.length;
+    // }
     
-    /// @notice retrieve candidate information 
-    function getCandidateName(uint index) public view 
-        returns (string memory) {
-        return candidates[index].name;
-    }    
+    // /// @notice retrieve candidate information 
+    // function getCandidateName(uint index) public view 
+    //     returns (string memory) {
+    //     return candidates[index].name;
+    // }    
 
     /// @notice start voting session
     function startVotingSession() 
@@ -347,7 +347,7 @@ contract ZuriSchool {
         public onlyTeacher onlyChairman onlyDuringStakeholdersRegistration {
         
         require(!stakeholders[_stakeholderAddress].isRegistered, 
-           "the stakeholder is already registered");
+           "the stakeholder is already registered"); 
         
         stakeholders[_stakeholderAddress].isRegistered = true;
         stakeholders[_stakeholderAddress].hasVoted = false;

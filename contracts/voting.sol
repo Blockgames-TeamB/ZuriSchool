@@ -416,7 +416,8 @@ contract ZuriSchool {
                     winningCandidateIndex += 1;
                 }
             }
-                return (totalVotes, winningVoteCount, items);
-            }   
+                // return (totalVotes, winningVoteCount, items);
+            } 
+             return (totalVotes, winningVoteCount, items);  
         }
     }

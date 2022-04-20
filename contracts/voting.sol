@@ -3,12 +3,12 @@ pragma solidity ^0.8.10;
 
 
 ///TODO///
-// function to add and remove stakeholder
-// function to remove teacher
-// function to remove director
+// function to add and remove stakeholder - completed, remains integration with UI
+// function to remove teacher - completed, remains integration with UI
+// function to remove director - completed, remains integration with UI
 // upload of csv and conversion to array
 // pause & unpause contract
-// function to remove director
+// function to remove director - duplicate! was it meant for a different task?
 
 
 /// @author TeamB - Blockgames Internship 22
@@ -61,7 +61,7 @@ contract ZuriSchool {
     /// @notice mapping for list of directors
     mapping(address => bool) public directors;
 
-    /// @notice mapping for list of directors
+    /// @notice declare state variable candidatesCount
     uint public candidatesCount;
 
     /// @notice mapping for list of teachers
@@ -173,8 +173,13 @@ contract ZuriSchool {
     }
 
     // EVENTS
-    /// @notice emit when stakeholder resisters
+    /// @notice emit when a stakeholder is registered
     event StakeholderRegisteredEvent (
+            address stakeholderAddress
+    ); 
+
+    /// @notice emit when a stakeholder is removed
+    event StakeholderRemovedEvent (
             address stakeholderAddress
     ); 
 
@@ -219,8 +224,8 @@ contract ZuriSchool {
     /// @notice emit when teacher is appointed
     event AppointTeacher (address adder, address newTeacher);
 
-    /// @notice emit when teacher is removed
-    event RemoveTeacher(address remover, address oldTeacherr);    
+    /// @notice emit when a teacher is removed
+    event RemoveTeacher(address remover, address oldTeacher);    
     
     constructor() {
         chairman = msg.sender;
@@ -344,6 +349,11 @@ contract ZuriSchool {
         emit StakeholderRegisteredEvent(_stakeholderAddress);
     }
 
+    function removeStakeholder(address _stakeholderAddress) public onlyAccess {
+        delete stakeholders[_stakeholderAddress];
+        emit StakeholderRemovedEvent(_stakeholderAddress);
+    }
+
     /// @notice add a director
     function assignDirector(address _newDirector) 
         public onlyChairman {
@@ -353,6 +363,12 @@ contract ZuriSchool {
         emit AppointDirector(msg.sender, _newDirector);
     }
 
+    function removeDirector(address _oldDirector) public onlyChairman {
+        delete directors[_oldDirector];
+        emit RemoveDirector(msg.sender, _oldDirector);
+    }
+
+
     /// @notice add a teacher
     function assignTeacher(address _newTeacher) 
         public onlyChairman {
@@ -360,6 +376,11 @@ contract ZuriSchool {
         
         /// @notice emit event of new teacher
         emit AppointTeacher(msg.sender, _newTeacher);
+    }
+
+    function removeTeacher(address _oldTeacher) public onlyChairman {
+        delete teachers[_oldTeacher];
+        emit RemoveTeacher(msg.sender, _oldTeacher);
     }
 
     function fetchElection() public view returns (Candidate[] memory) {

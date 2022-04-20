@@ -173,8 +173,13 @@ contract ZuriSchool {
     }
 
     // EVENTS
-    /// @notice emit when stakeholder resisters
+    /// @notice emit when a stakeholder is registered
     event StakeholderRegisteredEvent (
+            address stakeholderAddress
+    ); 
+
+    /// @notice emit when a stakeholder is removed
+    event StakeholderRemovedEvent (
             address stakeholderAddress
     ); 
 
@@ -342,6 +347,12 @@ contract ZuriSchool {
         stakeholders[_stakeholderAddress].votedCandidateId = 0;
         
         emit StakeholderRegisteredEvent(_stakeholderAddress);
+    }
+
+    function removeStakeholder(address _stakeholderAddress) public onlyAccess {
+        // Reset the value to the default value.
+        delete stakeholders[_stakeholderAddress];
+        emit StakeholderRemovedEvent(_stakeholderAddress);
     }
 
     /// @notice add a director

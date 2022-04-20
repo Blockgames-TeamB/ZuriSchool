@@ -34,7 +34,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
       */
     },
     rinkeby: {
-      url: process.env.ALCHEMY_API_URL,
+      url: process.env.RINKEBY_ALCHEMY_API_URL,
       accounts: [process.env.METAMASK_KEY],
     },
   },

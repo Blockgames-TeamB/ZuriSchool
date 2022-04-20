@@ -8,8 +8,8 @@ pragma solidity ^0.8.10;
 // function to remove director - completed, remains integration with UI
 // upload of csv and conversion to array
 // pause & unpause contract
-// function to remove director - duplicate! was it meant for a different task?
-
+// create separate function to setup election
+// id of election, list of id of candidates
 
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
@@ -367,7 +367,6 @@ contract ZuriSchool {
         delete directors[_oldDirector];
         emit RemoveDirector(msg.sender, _oldDirector);
     }
-
 
     /// @notice add a teacher
     function assignTeacher(address _newTeacher) 

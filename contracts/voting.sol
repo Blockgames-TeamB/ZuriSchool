@@ -7,6 +7,17 @@ pragma solidity ^0.8.10;
 // pause & unpause contract
 
 
+
+///@dev test process
+///***register address as stakeholders
+///-1- add category
+///-2-  register candidates
+///-3- setup election
+///-4-start voting session
+///-5- vote 
+///-6- end voting session
+///-7- compile votes
+
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
 contract ZuriSchool {
@@ -30,25 +41,11 @@ contract ZuriSchool {
     struct Election {
         string category;
         uint256[] candidatesID;
-        VotingProcess votingProcess;
+        bool VotingStarted;
+        bool VotingEnded;
+        bool VotesCounted;
+        bool isResultPublic;
     }
-
-
-    // ENUM
-    /// @notice voting process
-    enum VotingProcess {
-        RegisteredStakeholders, 
-        CandidatesRegistrationStarted,
-        CandidatesRegistrationEnded,
-        VotingStarted,
-        VotingEnded,
-        VotesCounted
-    }
-
-
-    // STATE VARIABLES
-    /// @notice declare state variable votingprocess
-    VotingProcess public votingProcess;
 
     /// @notice declare state variable teacher
     address[] public teachers;
@@ -74,7 +71,7 @@ contract ZuriSchool {
     /// @notice array for categories
     string[] public categories;
 
-    /// @notice votecount
+    /// @notice CategoryTrack
     uint256 count = 1;
 
     /// election queue
@@ -97,7 +94,7 @@ contract ZuriSchool {
     /// @notice array for candidates
     mapping(uint => Candidate) public candidates;
 
-    /// @notice mapping to check if an address has voted for a category
+    //voted for a category
     mapping(uint256=>mapping(address=>bool)) public votedForCategory;
     
     /// @notice mapping to check votes for a specific category
@@ -110,6 +107,23 @@ contract ZuriSchool {
     mapping(string => uint256) public Category;
     
 
+    mapping(uint256=>bool) public categoryRegistrationStatus;//tracks the catgory if registration is in session or not
+    mapping(string=>Candidate) public categoryWinner;
+    mapping(string=>Election) public activeElections;
+
+    Election[] public activeElectionArrays;
+   
+
+    // MODIFIER
+    /// @notice modifier to check that only the teachers can call a function
+    modifier onlyTeacher() {
+
+        /// @notice check that sender is a teacher
+        require(teacher[msg.sender]==true, 
+        "You're not one of our teachers");
+        _;
+    }
+
     // MODIFIER    
     /// @notice modifier to check that only the chairman can call a function
     modifier onlyChairman() {
@@ -120,16 +134,6 @@ contract ZuriSchool {
         _;
     }
     
-     /// @notice modifier to check that only the teachers can call a function
-    
-    modifier onlyTeachers() {
-
-        /// @notice check that sender is a teacher
-        
-        require( teacher[msg.sender] ==true, 
-        "Access granted to only the teachers");
-        _;
-    }
     /// @notice modifier to check that only the chairman or teacher can call a function
     modifier onlyAccess() {
 
@@ -145,6 +149,33 @@ contract ZuriSchool {
         /// @notice check that the sender is a registered stakeholder
         require(stakeholders[msg.sender].isRegistered, 
            "You must be a registered stakeholder");
+       _;
+    }
+    
+    /// @notice modifier to check that function can only be called during the voting period
+    modifier onlyDuringVotingSession(string memory _category) {
+
+        /// @notice require that this process only occurs during the voting period
+        require(activeElections[_category].VotingStarted ==true, 
+           "You can only do this during the voting session");
+       _;
+    }
+    
+    /// @notice modifier to check that function can only be called after the voting period
+    modifier onlyAfterVotingSession(string memory _category) {
+
+        /// @notice require that this process only occurs after the voting period
+        require(activeElections[_category].VotingEnded == true,  
+           "You can only do this after the voting has ended");
+       _;
+    }
+    
+    /// @notice modifier to check that function can only be called after the votes have been counted
+    modifier onlyAfterVotesCounted(string memory _category) {
+
+        /// @notice require that this process only occurs after the votes are counted
+        require(activeElections[_category].VotesCounted == true,  
+           "Only allowed after votes have been counted");
        _;
     }
     
@@ -179,10 +210,10 @@ contract ZuriSchool {
     );
     
     /// @notice emit when voting process has started
-    event VotingStartedEvent ();
+    event VotingStartedEvent (string category,bool status);
     
     /// @notice emit when voting process has ended
-    event VotingEndedEvent ();
+    event VotingEndedEvent (string category,bool status);
     
     /// @notice emit when stakeholder has voted
     event VotedEvent (
@@ -191,12 +222,11 @@ contract ZuriSchool {
     );
     
     /// @notice emit when votes have been counted
-    event VotesCountedEvent ();
+    event VotesCountedEvent (string category,uint256 totalVotes);
     
     /// @notice emit when voting process status changes
     event VotingProcessChangeEvent (
-       VotingProcess previousStatus,
-       VotingProcess newStatus
+       bool previousVotingStatus,bool currentVotingStatus
     );
 
     /// @notice emit when director is appointed
@@ -214,8 +244,15 @@ contract ZuriSchool {
 
     constructor() {
         chairman = msg.sender;
-        votingProcess = VotingProcess.RegisteredStakeholders;
-    }  
+        //add chairman a stakeholder
+
+    }
+     //helper function compare strings
+    function compareStrings(string memory _str, string memory str) private pure returns (bool) {
+        return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
+    }
+    
+    
     
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
@@ -264,36 +301,51 @@ contract ZuriSchool {
     electionQueue.push(Election(
         _category,
         _candidateID,
-        votingProcess
+        false,
+        false,
+        false,
+        false
     ));
     return true;
     }
 
+    ///clear election queue
+    function clearElectionQueue() public onlyChairman{
+        delete electionQueue;
+    }
     /// @notice start voting session
-    function startVotingSession() 
+    function startVotingSession(string memory _category) 
         public onlyAccess {
-        votingProcess = VotingProcess.VotingStarted;
-        
-        /// @dev emit events
-        emit VotingStartedEvent();
-        emit VotingProcessChangeEvent(
-            VotingProcess.CandidatesRegistrationEnded, votingProcess);
+        for(uint256 i = 0;i<electionQueue.length;i++){
+            if(compareStrings(electionQueue[i].category,_category)){
+                //add election category to active elections
+                activeElections[_category]=electionQueue[i];
+                //start voting session
+                activeElections[_category].VotingStarted=true;
+                //update the activeElectionArrays
+                activeElectionArrays.push(electionQueue[i]);
+            }
+        }
+        emit VotingStartedEvent(_category,true);
     }
     
     /// @notice end voting session
-    function endVotingSession() 
+    function endVotingSession(string memory _category) 
         public onlyAccess {
-        votingProcess = VotingProcess.VotingEnded;
-        
-        emit VotingEndedEvent();
-        emit VotingProcessChangeEvent(
-            VotingProcess.VotingStarted, votingProcess);        
+        activeElections[_category].VotingEnded = true;
+        emit VotingEndedEvent(_category,true);
+        emit VotingProcessChangeEvent( 
+        activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
     }
     
-    /// @notice function for voting process
-    /// @return category and candidate voted for
-    function vote(string memory _category, uint256 _candidateID) public returns (string memory, uint256) {
-    
+     
+    ///@notice function for voting process
+    ///@return category and candidate voted for
+    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) returns (string memory, uint256) {
+        //require that the session for voting is active
+        require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
+        //require that the session for voting is not yet ended
+        require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
         /// @notice require that a candidate is registered/active
         require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
     
@@ -313,6 +365,21 @@ contract ZuriSchool {
     
         return (_category, _candidateID);
     }
+    function getWinningCandidateId(string memory _category) onlyAfterVotesCounted(_category) public view
+       returns (uint) {
+       return categoryWinner[_category].id;
+    }
+    
+    function getWinningCandidateName(string memory _category) 
+       onlyAfterVotesCounted(_category) public view
+       returns (string memory,Candidate memory) {
+       return (categoryWinner[_category].name,categoryWinner[_category]);
+    }  
+    
+    function getWinningCandidateVoteCounts(string memory _category) onlyAfterVotesCounted(_category) public view
+       returns (uint) {
+       return categoryWinner[_category].voteCount;
+    }   
     
     /// @notice check if address is a registered stakeholder
     function isRegisteredStakeholder(address _stakeholderAddress) public view
@@ -365,7 +432,7 @@ contract ZuriSchool {
 
     /// @notice remove a director
     function removeDirector(address _oldDirector) public onlyChairman {
-        delete director[_oldDirector];
+        director[_oldDirector]=false;
 
         /// @notice emit event when a director is removed
         emit RemoveDirector(msg.sender, _oldDirector);
@@ -382,7 +449,7 @@ contract ZuriSchool {
 
     /// @notice remove a teacher
     function removeTeacher(address _oldTeacher) public onlyChairman {
-        delete teacher[_oldTeacher];
+        teacher[_oldTeacher] =false;
 
         /// @notice emit event when a teacher is removed
         emit RemoveTeacher(msg.sender, _oldTeacher);
@@ -429,13 +496,10 @@ function uploadDirectors(address[] calldata _address) onlyChairman
        
              stakeholders[_address[i]] = Stakeholder(true, false, 0 );
              }
-        }
-        
-       
-       
+        }  
     }
 
-function uploadStudents(address[] calldata _address) onlyTeachers
+function uploadStudents(address[] calldata _address) onlyAccess
         external
     
     {
@@ -449,40 +513,30 @@ function uploadStudents(address[] calldata _address) onlyTeachers
             //avoid duplication
             if(student[_address[i]] !=true)
           { 
-              students.push(_address[i]);
-               student[_address[i]] =true;
-             stakeholders[_address[i]] = Stakeholder(true, false, 0 );
-             }
-        }
-        
-
-       
+            students.push(_address[i]);
+            student[_address[i]] =true;
+            stakeholders[_address[i]] = Stakeholder(true, false, 0 );
+          }
+        }     
     }
 
 
     /// @notice fetch a specific election
-    function fetchElection() public view returns (Candidate[] memory) {
-    
-        uint currentIndex = 0;
+    function fetchElection() public view returns (Election[] memory) {
+        return activeElectionArrays;
+    }
 
-        Candidate[] memory items = new Candidate[](candidatesCount);
-            for (uint i = 0; i < candidatesCount; i++) {
-                
-                    uint currentId = candidates[i + 1].id;
-                    Candidate storage currentItem = candidates[currentId];
-                    items[currentIndex] = currentItem;
-                    currentIndex += 1;
-            }
-                return items;
-            }
-
-    /// @notice compile votes for an election
-    function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
+      /// @notice compile votes for an election
+    function compileVotes(string memory _position) onlyAccess public  returns (uint total, uint winnigVotes, Candidate[] memory){
+        //require that the category voting session is over before compiling votes
+        require(activeElections[_position].VotingEnded == true,"This session is still active for voting");
         uint winningVoteCount = 0;
         uint totalVotes=0;
+        uint256 winnerId;
         uint winningCandidateIndex = 0;
         Candidate[] memory items = new Candidate[](candidatesCount);
-    
+        
+       
         for (uint i = 0; i < candidatesCount; i++) {
             if (candidates[i + 1].category == Category[_position]) {
                 totalVotes += candidates[i + 1].voteCount;        
@@ -490,12 +544,25 @@ function uploadStudents(address[] calldata _address) onlyTeachers
                     
                     winningVoteCount = candidates[i + 1].voteCount;
                     uint currentId = candidates[i + 1].id;
+                    winnerId= currentId;
                     // winningCandidateIndex = i;
                     Candidate storage currentItem = candidates[currentId];
                     items[winningCandidateIndex] = currentItem;
                     winningCandidateIndex += 1;
                 }
-            }} 
-             return (totalVotes, winningVoteCount, items);  
-        }
+            }
+
+        } 
+        //update Election status
+        activeElections[_position].VotesCounted=true;
+        //update winner for the category
+        categoryWinner[_position]=candidates[winnerId];
+        return (totalVotes, winningVoteCount, items); 
     }
+
+    // //
+    // function viewResults(string memory _category) public returns {
+
+    // }
+        
+}

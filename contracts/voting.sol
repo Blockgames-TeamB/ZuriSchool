@@ -560,9 +560,20 @@ function uploadStudents(address[] calldata _address) onlyAccess
         return (totalVotes, winningVoteCount, items); 
     }
 
-    // //
-    // function viewResults(string memory _category) public returns {
-
-    // }
-        
+    //
+    function viewResults() public view returns(Candidate[] memory,string[] memory) {
+        // uint256 length = activeElectionArrays.length;
+        uint256 length = categories.length;
+        uint256 count = 0;
+        //create a memory array
+        Candidate[] memory results = new Candidate[](length);
+        string[] memory _category = new string[](length);
+        for(uint256 i =0;i<length;i++){
+            //call getWinningCategory by Id
+            results[count] = categoryWinner[categories[i]];
+            _category[count] = categories[i];
+            count++;
+        }
+        return (results,_category);
+    }   
 }

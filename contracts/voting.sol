@@ -77,6 +77,12 @@ contract ZuriSchool {
     /// @notice votecount
     uint256 count = 1;
 
+    /// @notice _disabled is used to disable the voting process
+    bool public _disabled;
+
+    /// @notice _paused is used to pause all functions in the smart contract in case of emergency
+    bool public _paused;
+
     /// election queue
     Election[] public electionQueue;
 
@@ -158,6 +164,18 @@ contract ZuriSchool {
         _;
     }
 
+ /// @notice modifier to check that voting is not disabled
+    modifier onlyWhenNotDisabled {
+        require(!_disabled, "Voting currently disabled");
+        _;
+    }
+
+ /// @notice modifier to check that contract is not paused
+    modifier onlyWhenNotPaused {
+        require(!_paused, "Contract is currently paused");
+        _;
+    }
+
 
     // EVENTS
     /// @notice emit when a stakeholder is registered
@@ -222,7 +240,7 @@ contract ZuriSchool {
     
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
-        public onlyAccess {
+        public onlyAccess onlyWhenNotPaused {
 
         /// @notice check that candidate not already active for an election
         require(activeCandidate[candidatesCount]==false,"Candidate is already active for an election");
@@ -245,7 +263,7 @@ contract ZuriSchool {
     }
 
     ///@notice add categories of offices for election
-    function addCategories(string memory _category) public returns(string memory ){
+    function addCategories(string memory _category) onlyWhenNotPaused public returns(string memory ){
         
         /// @notice add to the categories array
         categories.push(_category);
@@ -257,11 +275,11 @@ contract ZuriSchool {
     }
 
     ///@notice show all categories of offices available for election
-    function showCategories() public view returns(string[] memory){
+    function showCategories() onlyWhenNotPaused public view returns(string[] memory){
         return categories;
     }
     /// @notice setup election 
-    function setUpElection (string memory _category,uint256[] memory _candidateID) public returns(bool){
+    function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyWhenNotPaused returns(bool){
     
     /// @notice create a new election and add to election queue
     electionQueue.push(Election(
@@ -274,7 +292,7 @@ contract ZuriSchool {
 
     /// @notice start voting session
     function startVotingSession() 
-        public onlyAccess {
+        public onlyAccess onlyWhenNotPaused {
         votingProcess = VotingProcess.VotingStarted;
         
         /// @dev emit events
@@ -285,7 +303,7 @@ contract ZuriSchool {
     
     /// @notice end voting session
     function endVotingSession() 
-        public onlyAccess {
+        public onlyAccess onlyWhenNotPaused {
         votingProcess = VotingProcess.VotingEnded;
         
         emit VotingEndedEvent();
@@ -295,7 +313,7 @@ contract ZuriSchool {
     
     /// @notice function for voting process
     /// @return category and candidate voted for
-    function vote(string memory _category, uint256 _candidateID) public returns (string memory, uint256) {
+    function vote(string memory _category, uint256 _candidateID) public onlyWhenNotDisabled onlyWhenNotPaused returns (string memory, uint256) {
     
         /// @notice require that a candidate is registered/active
         require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
@@ -318,27 +336,27 @@ contract ZuriSchool {
     }
     
     /// @notice check if address is a registered stakeholder
-    function isRegisteredStakeholder(address _stakeholderAddress) public view
+    function isRegisteredStakeholder(address _stakeholderAddress) onlyWhenNotPaused public view
        returns (bool) {
        return stakeholders[_stakeholderAddress].isRegistered;
     }
     
     /// @notice check if address is a teacher
-    function isTeacher(address _address) public view 
+    function isTeacher(address _address) onlyWhenNotPaused public view 
         returns (bool) {
          bool result = teacher[_address];
         return  result;
     }     
     
     /// @notice check if address is the chairman
-    function isChairman(address _address) public view 
+    function isChairman(address _address) public onlyWhenNotPaused view 
         returns (bool) {
         return _address == chairman;
     }     
     
     /// @notice stakeholder registration
     function registerStakeholder(address _stakeholderAddress) 
-        public onlyAccess {
+        public onlyAccess onlyWhenNotPaused {
         
         require(!stakeholders[_stakeholderAddress].isRegistered, 
            "the stakeholder is already registered"); 
@@ -352,14 +370,14 @@ contract ZuriSchool {
     }
 
     /// @notice remove stakeholder
-    function removeStakeholder(address _stakeholderAddress) public onlyAccess {
+    function removeStakeholder(address _stakeholderAddress) public onlyAccess onlyWhenNotPaused{
         isStakeholders[_stakeholderAddress] = false;
         emit StakeholderRemovedEvent(_stakeholderAddress);
     }
 
     /// @notice add a director
     function assignDirector(address _newDirector) 
-        public onlyChairman {
+        public onlyChairman onlyWhenNotPaused{
         director[_newDirector] = true;
         
         /// @notice emit event of new director
@@ -367,8 +385,8 @@ contract ZuriSchool {
     }
 
     /// @notice remove a director
-    function removeDirector(address _oldDirector) public onlyChairman {
-        delete director[_oldDirector];
+    function removeDirector(address _oldDirector) public onlyChairman onlyWhenNotPaused {
+        director[_oldDirector] = false;
 
         /// @notice emit event when a director is removed
         emit RemoveDirector(msg.sender, _oldDirector);
@@ -376,7 +394,7 @@ contract ZuriSchool {
 
     /// @notice add a teacher
     function assignTeacher(address _newTeacher) 
-        public onlyChairman {
+        public onlyChairman onlyWhenNotPaused {
         teacher[_newTeacher] = true;
         
         /// @notice emit event of new teacher
@@ -384,14 +402,14 @@ contract ZuriSchool {
     }
 
     /// @notice remove a teacher
-    function removeTeacher(address _oldTeacher) public onlyChairman {
-        delete teacher[_oldTeacher];
+    function removeTeacher(address _oldTeacher) public onlyChairman onlyWhenNotPaused {
+        teacher[_oldTeacher] = false;
 
         /// @notice emit event when a teacher is removed
         emit RemoveTeacher(msg.sender, _oldTeacher);
     }
 
- function uploadTeachers(address[] calldata _address) onlyChairman
+ function uploadTeachers(address[] calldata _address) onlyChairman onlyWhenNotPaused
         external
     
     {
@@ -415,7 +433,7 @@ contract ZuriSchool {
        
     }
 
-function uploadDirectors(address[] calldata _address) onlyChairman
+function uploadDirectors(address[] calldata _address) onlyChairman onlyWhenNotPaused
         external
     
     {
@@ -438,7 +456,7 @@ function uploadDirectors(address[] calldata _address) onlyChairman
        
     }
 
-function uploadStudents(address[] calldata _address) onlyTeachers
+function uploadStudents(address[] calldata _address) onlyTeachers onlyWhenNotPaused
         external
     
     {
@@ -462,9 +480,8 @@ function uploadStudents(address[] calldata _address) onlyTeachers
        
     }
 
-
     /// @notice fetch a specific election
-    function fetchElection() public view returns (Candidate[] memory) {
+    function fetchElection() public view onlyWhenNotPaused returns (Candidate[] memory) {
     
         uint currentIndex = 0;
 
@@ -480,7 +497,7 @@ function uploadStudents(address[] calldata _address) onlyTeachers
             }
 
     /// @notice compile votes for an election
-    function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
+    function compileVotes(string memory _position) onlyWhenNotPaused onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
         uint winningVoteCount = 0;
         uint totalVotes=0;
         uint winningCandidateIndex = 0;
@@ -501,4 +518,14 @@ function uploadStudents(address[] calldata _address) onlyTeachers
             }} 
              return (totalVotes, winningVoteCount, items);  
         }
+
+   /// * @notice setDisabled() enables or disables votingProcess    
+    function setDisabled(bool _value) public onlyWhenNotPaused onlyChairman {
+          _disabled = _value;
     }
+
+   /// * @notice setPaused() enables or disables functions    
+    function setPaused(bool _value) public onlyChairman {
+          _paused = _value;
+    }
+}

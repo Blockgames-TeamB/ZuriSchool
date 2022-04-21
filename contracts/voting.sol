@@ -34,7 +34,11 @@ contract ZuriSchool {
     struct Election {
         string category;
         uint256[] candidatesID;
-        VotingProcess votingProcess;
+        bool CandidatesRegistrationStarted;
+        bool CandidatesRegistrationEnded;
+        bool VotingStarted;
+        bool VotingEnded;
+        bool VotesCounted;
     }
 
     // ENUM
@@ -76,7 +80,7 @@ contract ZuriSchool {
     mapping(uint => Candidate) public candidates;
 
     /// @dev id of winner
-    uint private winningCandidateId;
+    // uint private winningCandidateId;
     address[] public registeredStakeholders;
     //voted for a category
     mapping(uint256=>mapping(address=>bool)) public votedForCategory;
@@ -87,6 +91,8 @@ contract ZuriSchool {
     string[] public categories;
     uint256 count=1 ;
 
+    mapping(uint256=>bool) public categoryRegistrationStatus;//tracks the catgory if registration is in session or not
+    mapping(string=>Candidate) public categoryWinner;
     /// election queue
     Election[] public electionQueue;
 
@@ -247,7 +253,10 @@ contract ZuriSchool {
         chairman = msg.sender;
         votingProcess = VotingProcess.RegisteredStakeholders;
     }
-    
+     //helper function compare strings
+    function compareStrings(string memory _str, string memory str) private pure returns (bool) {
+        return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
+    }
     /// @notice function for the start of candidate registration
     function startCandidatesRegistration()
 
@@ -303,53 +312,69 @@ contract ZuriSchool {
     function showCategories() public view returns(string[] memory){
         return categories;
     }
+    function CandidatesRegistrationStarted(string memory _category) public returns(bool){
+        if(keccak256(abi.encodePacked(categories[Category[_category]])) == keccak256(abi.encodePacked(_category))){
+            categoryRegistrationStatus[Category[_category]]=true;
+            return true;
+        }
+        return false;
+    }
+    function CandidatesRegistrationEnded(string memory _category) public returns(bool){
+        if(keccak256(abi.encodePacked(categories[Category[_category]])) == keccak256(abi.encodePacked(_category))){
+            categoryRegistrationStatus[Category[_category]]=true;
+            return true;
+        }
+        return false;
+    }
     ///setup election 
     function setUpElection (string memory _category,uint256[] memory _candidateID) public returns(bool){
     //create a new election and add to election queue
     electionQueue.push(Election(
         _category,
         _candidateID,
-        votingProcess
+        CandidatesRegistrationStarted(_category),
+        CandidatesRegistrationEnded(_category),
+        false,
+        false,
+        false
     ));
     return true;
     }
 
-
+    ///clear election queue
+    function clearElectionQueue() public onlyChairman{
+        delete electionQueue;
+    }
     /// @notice start voting session
-    function startVotingSession() 
+    function startVotingSession(string memory _category) 
         public onlyAccess {
         votingProcess = VotingProcess.VotingStarted;
         
-
+        for(uint256 i = 0;i<electionQueue.length;i++){
+            if(compareStrings(electionQueue[i].category,_category)){
+                electionQueue[i].VotingStarted = true;
+            }
+        }
         emit VotingStartedEvent();
         emit VotingProcessChangeEvent(
             VotingProcess.CandidatesRegistrationEnded, votingProcess);
     }
     
     /// @notice end voting session
-    function endVotingSession() 
+    function endVotingSession(string memory _category) 
         public onlyAccess {
         votingProcess = VotingProcess.VotingEnded;
-        
+        for(uint256 i = 0;i<electionQueue.length;i++){
+            if(compareStrings(electionQueue[i].category,_category)){
+                electionQueue[i].VotingEnded = true;
+            }
+        }
         emit VotingEndedEvent();
         emit VotingProcessChangeEvent(
             VotingProcess.VotingStarted, votingProcess);        
     }
 
-    // function vote(uint candidateId) 
-    //     onlyRegisteredStakeholder 
-    //     onlyDuringVotingSession public {
-    //     require(!stakeholders[msg.sender].hasVoted, 
-    //         "the stakeholder has already voted");
-
-    //     stakeholders[msg.sender].hasVoted = true;
-    //     stakeholders[msg.sender].votedCandidateId = candidateId;
-
-    //     candidates[candidateId].voteCount += 1;
-
-    //     emit VotedEvent(msg.sender, candidateId);
-    // }
-     function vote(string memory _category, uint256 _candidateID) public returns (string memory, uint256) {
+     function vote(string memory _category, uint256 _candidateID) onlyRegisteredStakeholder onlyDuringVotingSession public returns (string memory, uint256) {
         //require that a candidate is registered/active
         require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
         //require that a candidate is valid for a vote in a category
@@ -363,20 +388,20 @@ contract ZuriSchool {
         emit VotedEvent(msg.sender, _candidateID);
         return (_category, _candidateID);
     }
-    function getWinningCandidateId() onlyAfterVotesCounted public view
+    function getWinningCandidateId(string memory _category) onlyAfterVotesCounted public view
        returns (uint) {
-       return winningCandidateId;
+       return categoryWinner[_category].id;
     }
     
-    function getWinningCandidateName() 
+    function getWinningCandidateName(string memory _category) 
        onlyAfterVotesCounted public view
-       returns (string memory) {
-       return candidates[winningCandidateId].name;
+       returns (string memory,Candidate memory) {
+       return (categoryWinner[_category].name,categoryWinner[_category]);
     }  
     
-    function getWinningCandidateVoteCounts() onlyAfterVotesCounted public view
+    function getWinningCandidateVoteCounts(string memory _category) onlyAfterVotesCounted public view
        returns (uint) {
-       return candidates[winningCandidateId].voteCount;
+       return categoryWinner[_category].voteCount;
     }   
     
     function isRegisteredStakeholder(address _stakeholderAddress) public view
@@ -461,12 +486,14 @@ contract ZuriSchool {
                 return items;
             }
 
-    function compileVotes(string memory _position) onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
+    function compileVotes(string memory _position) onlyAccess public  returns (uint total, uint winnigVotes, Candidate[] memory){
         uint winningVoteCount = 0;
         uint totalVotes=0;
+        uint256 winnerId;
         uint winningCandidateIndex = 0;
         Candidate[] memory items = new Candidate[](candidatesCount);
-    
+        votingProcess = VotingProcess.VotingEnded;
+        votingProcess = VotingProcess.VotesCounted;
         for (uint i = 0; i < candidatesCount; i++) {
             if (candidates[i + 1].category == Category[_position]) {
                 totalVotes += candidates[i + 1].voteCount;        
@@ -474,6 +501,7 @@ contract ZuriSchool {
                     
                     winningVoteCount = candidates[i + 1].voteCount;
                     uint currentId = candidates[i + 1].id;
+                    winnerId= currentId;
                     // winningCandidateIndex = i;
                     Candidate storage currentItem = candidates[currentId];
                     items[winningCandidateIndex] = currentItem;
@@ -481,7 +509,11 @@ contract ZuriSchool {
                 }
             }
                 // return (totalVotes, winningVoteCount, items);
-            } 
-             return (totalVotes, winningVoteCount, items);  
-        }
+
+        } 
+        //update winner for the category
+        categoryWinner[_position]=candidates[winnerId];
+        return (totalVotes, winningVoteCount, items); 
     }
+        
+}

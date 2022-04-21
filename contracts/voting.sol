@@ -116,7 +116,7 @@ contract ZuriSchool {
     
 
     mapping(uint256=>bool) public categoryRegistrationStatus;//tracks the catgory if registration is in session or not
-    mapping(string=>Candidate) public categoryWinner;
+    mapping(string=>Candidate) private categoryWinner;
     mapping(string=>Election) public activeElections;
 
     Election[] public activeElectionArrays;
@@ -188,8 +188,8 @@ contract ZuriSchool {
     }
     
     //modifier to ensure only directors can call selected functions.
-    modifier isDirector(address _user) {
-        bool isdirector = director[_user];
+    modifier isDirector() {
+        bool isdirector = director[msg.sender];
         require(isdirector, "Only Directors have Access!");
         _;
     }
@@ -574,16 +574,34 @@ function uploadStudents(address[] calldata _address) onlyAccess onlyWhenNotPause
         return (totalVotes, winningVoteCount, items); 
     }
 
+    //
+    function viewResults() private onlyAccess isDirector view returns(Candidate[] memory,string[] memory) {
+        //require that  
+        uint256 length = categories.length;
+        uint256 count = 0;
+        //create a memory array
+        Candidate[] memory results = new Candidate[](length);
+        string[] memory _category = new string[](length);
+        for(uint256 i =0;i<length;i++){
+            //call getWinningCategory by Id
+            results[count] = categoryWinner[categories[i]];
+            _category[count] = categories[i];
+            count++;
+        }
+        return (results,_category);
+    } 
+     
     /// @notice setpPaused() is used to pause all functions in the contract in case of an emergency
  
     function setPaused(bool _value) public onlyChairman {
         _paused = _value;
     }
 
+    function makeResultPublic(string memory _category) public onlyAccess isDirector returns(Candidate memory,string memory) {
+        //require that the category voting session is over before compiling votes
+        require(activeElections[_category].VotesCounted=true,"This session is still active,voting has not yet been counted");
+        activeElections[_category].isResultPublic=true;
+        return (categoryWinner[_category],_category);
+    } 
 
-    // //
-    // function viewResults(string memory _category) public returns {
-
-    // }
-        
-}
+   }

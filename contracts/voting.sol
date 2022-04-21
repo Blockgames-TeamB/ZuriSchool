@@ -108,7 +108,7 @@ contract ZuriSchool {
     
 
     mapping(uint256=>bool) public categoryRegistrationStatus;//tracks the catgory if registration is in session or not
-    mapping(string=>Candidate) public categoryWinner;
+    mapping(string=>Candidate) private categoryWinner;
     mapping(string=>Election) public activeElections;
 
     Election[] public activeElectionArrays;
@@ -180,8 +180,8 @@ contract ZuriSchool {
     }
     
     //modifier to ensure only directors can call selected functions.
-    modifier isDirector(address _user) {
-        bool isdirector = director[_user];
+    modifier isDirector() {
+        bool isdirector = director[msg.sender];
         require(isdirector, "Only Directors have Access!");
         _;
     }
@@ -561,8 +561,8 @@ function uploadStudents(address[] calldata _address) onlyAccess
     }
 
     //
-    function viewResults() public view returns(Candidate[] memory,string[] memory) {
-        // uint256 length = activeElectionArrays.length;
+    function viewResults() private onlyAccess isDirector view returns(Candidate[] memory,string[] memory) {
+        //require that  
         uint256 length = categories.length;
         uint256 count = 0;
         //create a memory array
@@ -575,5 +575,13 @@ function uploadStudents(address[] calldata _address) onlyAccess
             count++;
         }
         return (results,_category);
-    }   
-}
+    }  
+
+    function makeResultPublic(string memory _category) public onlyAccess isDirector returns(Candidate memory,string memory) {
+        //require that the category voting session is over before compiling votes
+        require(activeElections[_category].VotesCounted=true,"This session is still active,voting has not yet been counted");
+        activeElections[_category].isResultPublic=true;
+        return (categoryWinner[_category],_category);
+    } 
+
+   }

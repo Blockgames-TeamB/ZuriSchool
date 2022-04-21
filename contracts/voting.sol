@@ -3,9 +3,6 @@ pragma solidity ^0.8.10;
 
 
 ///TODO///
-// upload of csv and conversion to array
-// pause & unpause contract
-
 
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
@@ -241,7 +238,9 @@ contract ZuriSchool {
     function showCategories() public view returns(string[] memory){
         return categories;
     }
+
     /// @notice setup election 
+    /// @dev takes in category and an array of candidates
     function setUpElection (string memory _category,uint256[] memory _candidateID) public returns(bool){
     
     /// @notice create a new election and add to election queue

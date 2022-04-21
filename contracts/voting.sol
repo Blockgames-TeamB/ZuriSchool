@@ -335,32 +335,6 @@ contract ZuriSchool {
         delete electionQueue;
     }
     /// @notice start voting session
-<<<<<<< HEAD
-    function startVotingSession() 
-        public onlyAccess onlyWhenNotPaused {
-        votingProcess = VotingProcess.VotingStarted;
-        
-        /// @dev emit events
-        emit VotingStartedEvent();
-        emit VotingProcessChangeEvent(
-            VotingProcess.CandidatesRegistrationEnded, votingProcess);
-    }
-    
-    /// @notice end voting session
-    function endVotingSession() 
-        public onlyAccess onlyWhenNotPaused {
-        votingProcess = VotingProcess.VotingEnded;
-        
-        emit VotingEndedEvent();
-        emit VotingProcessChangeEvent(
-            VotingProcess.VotingStarted, votingProcess);        
-    }
-    
-    /// @notice function for voting process
-    /// @return category and candidate voted for
-    function vote(string memory _category, uint256 _candidateID) public onlyWhenNotDisabled onlyWhenNotPaused returns (string memory, uint256) {
-    
-=======
     function startVotingSession(string memory _category) 
         public onlyAccess {
         for(uint256 i = 0;i<electionQueue.length;i++){
@@ -393,7 +367,6 @@ contract ZuriSchool {
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         //require that the session for voting is not yet ended
         require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
->>>>>>> 16b79a21e2564a05135e28a07218debc5db9cdef
         /// @notice require that a candidate is registered/active
         require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
     
@@ -479,13 +452,8 @@ contract ZuriSchool {
     }
 
     /// @notice remove a director
-<<<<<<< HEAD
     function removeDirector(address _oldDirector) public onlyChairman onlyWhenNotPaused {
         director[_oldDirector] = false;
-=======
-    function removeDirector(address _oldDirector) public onlyChairman {
-        director[_oldDirector]=false;
->>>>>>> 16b79a21e2564a05135e28a07218debc5db9cdef
 
         /// @notice emit event when a director is removed
         emit RemoveDirector(msg.sender, _oldDirector);
@@ -501,13 +469,8 @@ contract ZuriSchool {
     }
 
     /// @notice remove a teacher
-<<<<<<< HEAD
     function removeTeacher(address _oldTeacher) public onlyChairman onlyWhenNotPaused {
         teacher[_oldTeacher] = false;
-=======
-    function removeTeacher(address _oldTeacher) public onlyChairman {
-        teacher[_oldTeacher] =false;
->>>>>>> 16b79a21e2564a05135e28a07218debc5db9cdef
 
         /// @notice emit event when a teacher is removed
         emit RemoveTeacher(msg.sender, _oldTeacher);
@@ -557,11 +520,7 @@ function uploadDirectors(address[] calldata _address) onlyChairman onlyWhenNotPa
         }  
     }
 
-<<<<<<< HEAD
-function uploadStudents(address[] calldata _address) onlyTeachers onlyWhenNotPaused
-=======
 function uploadStudents(address[] calldata _address) onlyAccess
->>>>>>> 16b79a21e2564a05135e28a07218debc5db9cdef
         external
     
     {
@@ -583,25 +542,6 @@ function uploadStudents(address[] calldata _address) onlyAccess
     }
 
     /// @notice fetch a specific election
-<<<<<<< HEAD
-    function fetchElection() public view onlyWhenNotPaused returns (Candidate[] memory) {
-    
-        uint currentIndex = 0;
-
-        Candidate[] memory items = new Candidate[](candidatesCount);
-            for (uint i = 0; i < candidatesCount; i++) {
-                
-                    uint currentId = candidates[i + 1].id;
-                    Candidate storage currentItem = candidates[currentId];
-                    items[currentIndex] = currentItem;
-                    currentIndex += 1;
-            }
-                return items;
-            }
-
-    /// @notice compile votes for an election
-    function compileVotes(string memory _position) onlyWhenNotPaused onlyAccess public view  returns (uint total, uint winnigVotes, Candidate[] memory){
-=======
     function fetchElection() public view returns (Election[] memory) {
         return activeElectionArrays;
     }
@@ -610,7 +550,6 @@ function uploadStudents(address[] calldata _address) onlyAccess
     function compileVotes(string memory _position) onlyAccess public  returns (uint total, uint winnigVotes, Candidate[] memory){
         //require that the category voting session is over before compiling votes
         require(activeElections[_position].VotingEnded == true,"This session is still active for voting");
->>>>>>> 16b79a21e2564a05135e28a07218debc5db9cdef
         uint winningVoteCount = 0;
         uint totalVotes=0;
         uint256 winnerId;
@@ -631,21 +570,6 @@ function uploadStudents(address[] calldata _address) onlyAccess
                     items[winningCandidateIndex] = currentItem;
                     winningCandidateIndex += 1;
                 }
-<<<<<<< HEAD
-            }} 
-             return (totalVotes, winningVoteCount, items);  
-        }
-
-   /// * @notice setDisabled() enables or disables votingProcess    
-    function setDisabled(bool _value) public onlyWhenNotPaused onlyChairman {
-          _disabled = _value;
-    }
-
-   /// * @notice setPaused() enables or disables functions    
-    function setPaused(bool _value) public onlyChairman {
-          _paused = _value;
-    }
-=======
             }
 
         } 
@@ -661,5 +585,4 @@ function uploadStudents(address[] calldata _address) onlyAccess
 
     // }
         
->>>>>>> 16b79a21e2564a05135e28a07218debc5db9cdef
 }

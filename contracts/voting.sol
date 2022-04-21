@@ -51,13 +51,16 @@ contract ZuriSchool {
     VotingProcess public votingProcess;
 
     /// @notice declare state variable teacher
-    address public teacher;
+    address[] public teachers;
 
     /// @notice declare state variable chairman
     address public chairman;
 
     /// @notice declare state variable director
-    address public director;
+    address[] public directors;
+    
+        /// @notice declare array of state variable student
+    address[] public students;
 
     /// @notice declare state variable candidatesCount
     uint public candidatesCount = 0;
@@ -86,10 +89,13 @@ contract ZuriSchool {
     mapping(address => bool) public isStakeholders;
 
     /// @notice mapping for list of directors
-    mapping(address => bool) public directors;
+    mapping(address => bool) public director;
 
     /// @notice mapping for list of teachers
-    mapping(address => bool) public teachers;
+    mapping(address => bool) public teacher;
+    
+     /// @notice mapping for list of student
+    mapping(address => bool) public student;
 
     /// @notice array for candidates
     mapping(uint => Candidate) public candidates;
@@ -117,11 +123,21 @@ contract ZuriSchool {
         _;
     }
     
+     /// @notice modifier to check that only the teachers can call a function
+    
+    modifier onlyTeachers() {
+
+        /// @notice check that sender is a teacher
+        
+        require( teacher[msg.sender] ==true, 
+        "Access granted to only the teachers");
+        _;
+    }
     /// @notice modifier to check that only the chairman or teacher can call a function
     modifier onlyAccess() {
 
         /// @notice check that sender is the chairman
-        require(msg.sender == chairman || msg.sender == teacher, 
+        require(msg.sender == chairman || teacher[msg.sender] ==true, 
         "Access granted to only the chairman");
         _;
     }
@@ -137,7 +153,7 @@ contract ZuriSchool {
     
     //modifier to ensure only directors can call selected functions.
     modifier isDirector(address _user) {
-        bool isdirector = directors[_user];
+        bool isdirector = director[_user];
         require(isdirector, "Only Directors have Access!");
         _;
     }
@@ -310,7 +326,8 @@ contract ZuriSchool {
     /// @notice check if address is a teacher
     function isTeacher(address _address) public view 
         returns (bool) {
-        return _address == teacher;
+         bool result = teacher[_address];
+        return  result;
     }     
     
     /// @notice check if address is the chairman
@@ -343,7 +360,7 @@ contract ZuriSchool {
     /// @notice add a director
     function assignDirector(address _newDirector) 
         public onlyChairman {
-        directors[_newDirector] = true;
+        director[_newDirector] = true;
         
         /// @notice emit event of new director
         emit AppointDirector(msg.sender, _newDirector);
@@ -351,7 +368,7 @@ contract ZuriSchool {
 
     /// @notice remove a director
     function removeDirector(address _oldDirector) public onlyChairman {
-        delete directors[_oldDirector];
+        delete director[_oldDirector];
 
         /// @notice emit event when a director is removed
         emit RemoveDirector(msg.sender, _oldDirector);
@@ -360,7 +377,7 @@ contract ZuriSchool {
     /// @notice add a teacher
     function assignTeacher(address _newTeacher) 
         public onlyChairman {
-        teachers[_newTeacher] = true;
+        teacher[_newTeacher] = true;
         
         /// @notice emit event of new teacher
         emit AppointTeacher(msg.sender, _newTeacher);
@@ -368,11 +385,83 @@ contract ZuriSchool {
 
     /// @notice remove a teacher
     function removeTeacher(address _oldTeacher) public onlyChairman {
-        delete teachers[_oldTeacher];
+        delete teacher[_oldTeacher];
 
         /// @notice emit event when a teacher is removed
         emit RemoveTeacher(msg.sender, _oldTeacher);
     }
+
+ function uploadTeachers(address[] calldata _address) onlyChairman
+        external
+    
+    {
+        //loop through the loyal customers and map rewards from the allocatedQuotas
+        require(
+            _address.length >0,
+            "Upload array of addresses"
+        );
+
+        for (uint i = 0; i < _address.length; i++) {
+            ///avoid duplication
+            if(teacher[_address[i]] != true)
+            {teacher[_address[i]] = true;
+       
+             stakeholders[_address[i]] = Stakeholder(true, false, 0 );
+             teachers.push(_address[i]);
+             }
+        }
+        
+       
+       
+    }
+
+function uploadDirectors(address[] calldata _address) onlyChairman
+        external
+    
+    {
+        //loop through the loyal customers and map rewards from the allocatedQuotas
+        require(
+            _address.length >0,
+            "Upload array of addresses"
+        );
+
+        for (uint i = 0; i < _address.length; i++) {
+            //avoid duplication
+            if(director[_address[i]] != true)
+            {director[_address[i]] = true;
+       
+             stakeholders[_address[i]] = Stakeholder(true, false, 0 );
+             }
+        }
+        
+       
+       
+    }
+
+function uploadStudents(address[] calldata _address) onlyTeachers
+        external
+    
+    {
+        //loop through the loyal customers and map rewards from the allocatedQuotas
+        require(
+            _address.length >0,
+            "Upload array of addresses"
+        );
+
+        for (uint i = 0; i < _address.length; i++) {
+            //avoid duplication
+            if(student[_address[i]] !=true)
+          { 
+              students.push(_address[i]);
+               student[_address[i]] =true;
+             stakeholders[_address[i]] = Stakeholder(true, false, 0 );
+             }
+        }
+        
+
+       
+    }
+
 
     /// @notice fetch a specific election
     function fetchElection() public view returns (Candidate[] memory) {

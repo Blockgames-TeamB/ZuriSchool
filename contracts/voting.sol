@@ -1,6 +1,6 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.10;
-
+import "./ZuriSchoolToken.sol";
 
 ///TODO///
 // upload of csv and conversion to array
@@ -21,7 +21,9 @@ pragma solidity ^0.8.10;
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
 contract ZuriSchool {
-    
+    // 
+    ZuriSchoolToken public zstoken;
+
     // STRUCT
     /// @notice structure for stakeholders
     struct Stakeholder {
@@ -74,7 +76,7 @@ contract ZuriSchool {
     /// @notice CategoryTrack
     uint256 count = 1;
 
-    /// @notice _paused is used to pause all functions in the smart contract in case of emergency
+    /// @notice declare state variable _paused
     bool public _paused;
 
     /// election queue
@@ -253,12 +255,13 @@ contract ZuriSchool {
     /// @notice emit when a teacher is removed
     event RemoveTeacher(address remover, address oldTeacher);    
 
-
     constructor() {
+        zstoken.mint(msg.sender, 1000 * 10**18);
         chairman = msg.sender;
         //add chairman a stakeholder
 
     }
+
      //helper function compare strings
     function compareStrings(string memory _str, string memory str) private pure returns (bool) {
         return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
@@ -570,6 +573,13 @@ function uploadStudents(address[] calldata _address) onlyAccess onlyWhenNotPause
         categoryWinner[_position]=candidates[winnerId];
         return (totalVotes, winningVoteCount, items); 
     }
+
+    /// @notice setpPaused() is used to pause all functions in the contract in case of an emergency
+ 
+    function setPaused(bool _value) public onlyChairman {
+        _paused = _value;
+    }
+
 
     // //
     // function viewResults(string memory _category) public returns {

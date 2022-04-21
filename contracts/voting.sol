@@ -60,8 +60,11 @@ contract ZuriSchool {
     /// @notice declare state variable director
     address public director;
 
-    /// @notice mapping for list of stakeholders
+    /// @notice mapping for list of stakeholders addresses
     mapping(address => Stakeholder) public stakeholders;
+
+    /// @notice mapping for list of stakeholders current status
+    mapping(address => bool) public isStakeholders;
 
     /// @notice mapping for list of directors
     mapping(address => bool) public directors;
@@ -413,7 +416,7 @@ contract ZuriSchool {
     }
 
     function removeStakeholder(address _stakeholderAddress) public onlyAccess {
-        delete stakeholders[_stakeholderAddress];
+        isStakeholders[_stakeholderAddress] = false;
         emit StakeholderRemovedEvent(_stakeholderAddress);
     }
 
@@ -427,7 +430,7 @@ contract ZuriSchool {
     }
 
     function removeDirector(address _oldDirector) public onlyChairman {
-        delete directors[_oldDirector];
+        directors[_oldDirector] = false;
         emit RemoveDirector(msg.sender, _oldDirector);
     }
 
@@ -442,7 +445,7 @@ contract ZuriSchool {
     }
 
     function removeTeacher(address _oldTeacher) public onlyChairman {
-        delete teachers[_oldTeacher];
+        teachers[_oldTeacher] = false;
         emit RemoveTeacher(msg.sender, _oldTeacher);
     }
 

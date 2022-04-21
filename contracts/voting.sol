@@ -1,5 +1,6 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.10;
+import "./ZuriSchoolToken.sol";
 
 ///TODO///
 // upload of csv and conversion to array
@@ -20,6 +21,9 @@ pragma solidity ^0.8.10;
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
 contract ZuriSchool {
+    // 
+    ZuriSchoolToken public zstoken;
+
     // STRUCT
     /// @notice structure for stakeholders
     struct Stakeholder {
@@ -252,6 +256,7 @@ contract ZuriSchool {
     event RemoveTeacher(address remover, address oldTeacher);    
 
     constructor() {
+        zstoken.mint(msg.sender, 1000 * 10**18);
         chairman = msg.sender;
         //add chairman a stakeholder
 

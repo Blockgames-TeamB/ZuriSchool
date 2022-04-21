@@ -574,7 +574,6 @@ function uploadStudents(address[] calldata _address) onlyAccess onlyWhenNotPause
         return (totalVotes, winningVoteCount, items); 
     }
 
-<<<<<<< HEAD
     //
     function viewResults() private onlyAccess isDirector view returns(Candidate[] memory,string[] memory) {
         //require that  
@@ -590,18 +589,13 @@ function uploadStudents(address[] calldata _address) onlyAccess onlyWhenNotPause
             count++;
         }
         return (results,_category);
-    }  
-=======
+    } 
+     
     /// @notice setpPaused() is used to pause all functions in the contract in case of an emergency
  
     function setPaused(bool _value) public onlyChairman {
         _paused = _value;
     }
-
-
-    // //
-    // function viewResults(string memory _category) public returns {
->>>>>>> 891254fbc5e645eaa9ca35a11bc43bc417b1e85c
 
     function makeResultPublic(string memory _category) public onlyAccess isDirector returns(Candidate memory,string memory) {
         //require that the category voting session is over before compiling votes

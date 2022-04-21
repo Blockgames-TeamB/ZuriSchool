@@ -3,13 +3,9 @@ pragma solidity ^0.8.10;
 
 
 ///TODO///
-// function to add and remove stakeholder - completed, remains integration with UI
-// function to remove teacher - completed, remains integration with UI
-// function to remove director - completed, remains integration with UI
 // upload of csv and conversion to array
 // pause & unpause contract
-// create separate function to setup election
-// id of election, list of id of candidates
+
 
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp

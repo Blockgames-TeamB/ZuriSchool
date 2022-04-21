@@ -1,7 +1,6 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.10;
 
-
 ///TODO///
 // upload of csv and conversion to array
 // pause & unpause contract
@@ -21,7 +20,6 @@ pragma solidity ^0.8.10;
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
 contract ZuriSchool {
-    
     // STRUCT
     /// @notice structure for stakeholders
     struct Stakeholder {
@@ -74,6 +72,9 @@ contract ZuriSchool {
     /// @notice CategoryTrack
     uint256 count = 1;
 
+    /// @notice declare state variable _paused
+    bool public _paused;
+
     /// election queue
     Election[] public electionQueue;
 
@@ -81,6 +82,9 @@ contract ZuriSchool {
     // MAPPING
     /// @notice mapping for list of stakeholders
     mapping(address => Stakeholder) public stakeholders;
+
+    /// @notice mapping for list of stakeholders current status
+    mapping(address => bool) public isStakeholders;
 
     /// @notice mapping for list of directors
     mapping(address => bool) public director;
@@ -186,6 +190,12 @@ contract ZuriSchool {
         _;
     }
 
+ /// @notice modifier to check that contract is not paused
+    modifier onlyWhenNotPaused {
+        require(!_paused, "Contract is currently paused");
+        _;
+    }
+
 
     // EVENTS
     /// @notice emit when a stakeholder is registered
@@ -241,12 +251,12 @@ contract ZuriSchool {
     /// @notice emit when a teacher is removed
     event RemoveTeacher(address remover, address oldTeacher);    
 
-
     constructor() {
         chairman = msg.sender;
         //add chairman a stakeholder
 
     }
+
      //helper function compare strings
     function compareStrings(string memory _str, string memory str) private pure returns (bool) {
         return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
@@ -256,7 +266,7 @@ contract ZuriSchool {
     
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
-        public onlyAccess {
+        public onlyAccess onlyWhenNotPaused {
 
         /// @notice check that candidate not already active for an election
         require(activeCandidate[candidatesCount]==false,"Candidate is already active for an election");
@@ -279,7 +289,7 @@ contract ZuriSchool {
     }
 
     ///@notice add categories of offices for election
-    function addCategories(string memory _category) public returns(string memory ){
+    function addCategories(string memory _category) onlyAccess onlyWhenNotPaused public returns(string memory ){
         
         /// @notice add to the categories array
         categories.push(_category);
@@ -291,11 +301,11 @@ contract ZuriSchool {
     }
 
     ///@notice show all categories of offices available for election
-    function showCategories() public view returns(string[] memory){
+    function showCategories() onlyWhenNotPaused public view returns(string[] memory){
         return categories;
     }
     /// @notice setup election 
-    function setUpElection (string memory _category,uint256[] memory _candidateID) public returns(bool){
+    function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyAccess onlyWhenNotPaused returns(bool){
     
     /// @notice create a new election and add to election queue
     electionQueue.push(Election(
@@ -310,12 +320,12 @@ contract ZuriSchool {
     }
 
     ///clear election queue
-    function clearElectionQueue() public onlyChairman{
+    function clearElectionQueue() public onlyChairman onlyWhenNotPaused{
         delete electionQueue;
     }
     /// @notice start voting session
     function startVotingSession(string memory _category) 
-        public onlyAccess {
+        public onlyChairman onlyWhenNotPaused {
         for(uint256 i = 0;i<electionQueue.length;i++){
             if(compareStrings(electionQueue[i].category,_category)){
                 //add election category to active elections
@@ -331,7 +341,7 @@ contract ZuriSchool {
     
     /// @notice end voting session
     function endVotingSession(string memory _category) 
-        public onlyAccess {
+        public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         emit VotingEndedEvent(_category,true);
         emit VotingProcessChangeEvent( 
@@ -341,7 +351,7 @@ contract ZuriSchool {
      
     ///@notice function for voting process
     ///@return category and candidate voted for
-    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) returns (string memory, uint256) {
+    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) onlyWhenNotPaused returns (string memory, uint256) {
         //require that the session for voting is active
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         //require that the session for voting is not yet ended
@@ -365,44 +375,44 @@ contract ZuriSchool {
     
         return (_category, _candidateID);
     }
-    function getWinningCandidateId(string memory _category) onlyAfterVotesCounted(_category) public view
+    function getWinningCandidateId(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (uint) {
        return categoryWinner[_category].id;
     }
     
     function getWinningCandidateName(string memory _category) 
-       onlyAfterVotesCounted(_category) public view
+       onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (string memory,Candidate memory) {
        return (categoryWinner[_category].name,categoryWinner[_category]);
     }  
     
-    function getWinningCandidateVoteCounts(string memory _category) onlyAfterVotesCounted(_category) public view
+    function getWinningCandidateVoteCounts(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (uint) {
        return categoryWinner[_category].voteCount;
     }   
     
     /// @notice check if address is a registered stakeholder
-    function isRegisteredStakeholder(address _stakeholderAddress) public view
+    function isRegisteredStakeholder(address _stakeholderAddress) onlyWhenNotPaused public view
        returns (bool) {
        return stakeholders[_stakeholderAddress].isRegistered;
     }
     
     /// @notice check if address is a teacher
-    function isTeacher(address _address) public view 
+    function isTeacher(address _address) onlyWhenNotPaused public view 
         returns (bool) {
          bool result = teacher[_address];
         return  result;
     }     
     
     /// @notice check if address is the chairman
-    function isChairman(address _address) public view 
+    function isChairman(address _address) onlyWhenNotPaused public view 
         returns (bool) {
         return _address == chairman;
     }     
     
     /// @notice stakeholder registration
     function registerStakeholder(address _stakeholderAddress) 
-        public onlyAccess {
+        public onlyAccess onlyWhenNotPaused {
         
         require(!stakeholders[_stakeholderAddress].isRegistered, 
            "the stakeholder is already registered"); 
@@ -416,14 +426,14 @@ contract ZuriSchool {
     }
 
     /// @notice remove stakeholder
-    function removeStakeholder(address _stakeholderAddress) public onlyAccess {
-        delete stakeholders[_stakeholderAddress];
+    function removeStakeholder(address _stakeholderAddress) public onlyAccess onlyWhenNotPaused{
+        isStakeholders[_stakeholderAddress] = false;
         emit StakeholderRemovedEvent(_stakeholderAddress);
     }
 
     /// @notice add a director
     function assignDirector(address _newDirector) 
-        public onlyChairman {
+        public onlyChairman onlyWhenNotPaused{
         director[_newDirector] = true;
         
         /// @notice emit event of new director
@@ -431,8 +441,8 @@ contract ZuriSchool {
     }
 
     /// @notice remove a director
-    function removeDirector(address _oldDirector) public onlyChairman {
-        director[_oldDirector]=false;
+    function removeDirector(address _oldDirector) public onlyChairman onlyWhenNotPaused {
+        director[_oldDirector] = false;
 
         /// @notice emit event when a director is removed
         emit RemoveDirector(msg.sender, _oldDirector);
@@ -440,7 +450,7 @@ contract ZuriSchool {
 
     /// @notice add a teacher
     function assignTeacher(address _newTeacher) 
-        public onlyChairman {
+        public onlyChairman onlyWhenNotPaused {
         teacher[_newTeacher] = true;
         
         /// @notice emit event of new teacher
@@ -448,18 +458,18 @@ contract ZuriSchool {
     }
 
     /// @notice remove a teacher
-    function removeTeacher(address _oldTeacher) public onlyChairman {
-        teacher[_oldTeacher] =false;
+    function removeTeacher(address _oldTeacher) public onlyChairman onlyWhenNotPaused {
+        teacher[_oldTeacher] = false;
 
         /// @notice emit event when a teacher is removed
         emit RemoveTeacher(msg.sender, _oldTeacher);
     }
 
- function uploadTeachers(address[] calldata _address) onlyChairman
+ function uploadTeachers(address[] calldata _address) onlyChairman onlyWhenNotPaused
         external
     
     {
-        //loop through the loyal customers and map rewards from the allocatedQuotas
+        //loop through the list of teachers and upload
         require(
             _address.length >0,
             "Upload array of addresses"
@@ -479,11 +489,11 @@ contract ZuriSchool {
        
     }
 
-function uploadDirectors(address[] calldata _address) onlyChairman
+function uploadDirectors(address[] calldata _address) onlyChairman onlyWhenNotPaused
         external
     
     {
-        //loop through the loyal customers and map rewards from the allocatedQuotas
+        //loop through the list of directors and upload
         require(
             _address.length >0,
             "Upload array of addresses"
@@ -499,11 +509,11 @@ function uploadDirectors(address[] calldata _address) onlyChairman
         }  
     }
 
-function uploadStudents(address[] calldata _address) onlyAccess
+function uploadStudents(address[] calldata _address) onlyAccess onlyWhenNotPaused
         external
     
     {
-        //loop through the loyal customers and map rewards from the allocatedQuotas
+        //loop through the list of students and upload
         require(
             _address.length >0,
             "Upload array of addresses"
@@ -520,14 +530,13 @@ function uploadStudents(address[] calldata _address) onlyAccess
         }     
     }
 
-
     /// @notice fetch a specific election
-    function fetchElection() public view returns (Election[] memory) {
+    function fetchElection() onlyWhenNotPaused public view returns (Election[] memory) {
         return activeElectionArrays;
     }
 
       /// @notice compile votes for an election
-    function compileVotes(string memory _position) onlyAccess public  returns (uint total, uint winnigVotes, Candidate[] memory){
+    function compileVotes(string memory _position) onlyAccess onlyWhenNotPaused public  returns (uint total, uint winnigVotes, Candidate[] memory){
         //require that the category voting session is over before compiling votes
         require(activeElections[_position].VotingEnded == true,"This session is still active for voting");
         uint winningVoteCount = 0;
@@ -559,6 +568,13 @@ function uploadStudents(address[] calldata _address) onlyAccess
         categoryWinner[_position]=candidates[winnerId];
         return (totalVotes, winningVoteCount, items); 
     }
+
+    /// @notice setpPaused() is used to pause all functions in the contract in case of an emergency
+ 
+    function setPaused(bool _value) public onlyChairman {
+        _paused = _value;
+    }
+
 
     // //
     // function viewResults(string memory _category) public returns {

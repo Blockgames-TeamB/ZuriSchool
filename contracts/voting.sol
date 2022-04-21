@@ -25,12 +25,17 @@ contract ZuriSchool {
 
     /// @notice structure for candidates
     struct Candidate {
-        uint   id;
+        uint256   id;
         string name;   
-        string position;
+        uint256 category;
         uint voteCount; 
     }
-
+    // mapping(uint256 => Candidate) public candidate;
+    struct Election {
+        string category;
+        uint256[] candidatesID;
+        VotingProcess votingProcess;
+    }
 
     // ENUM
     /// @notice voting process
@@ -62,7 +67,7 @@ contract ZuriSchool {
     mapping(address => bool) public directors;
 
     /// @notice declare state variable candidatesCount
-    uint public candidatesCount;
+    uint public candidatesCount=0;
 
     /// @notice mapping for list of teachers
     mapping(address => bool) public teachers;
@@ -72,7 +77,18 @@ contract ZuriSchool {
 
     /// @dev id of winner
     uint private winningCandidateId;
+    address[] public registeredStakeholders;
+    //voted for a category
+    mapping(uint256=>mapping(address=>bool)) public votedForCategory;
+    mapping(uint256=>mapping(uint256=>uint256)) public votesForCategory;
 
+    mapping(uint256=>bool) public activeCandidate;
+    mapping(string => uint256) public Category;
+    string[] public categories;
+    uint256 count=1 ;
+
+    /// election queue
+    Election[] public electionQueue;
 
     // MODIFIER
     /// @notice modifier to check that only teachers can call a function
@@ -257,13 +273,47 @@ contract ZuriSchool {
     }
     
     /// @notice store candidates information
-    function registerCandidate(string memory candidateName, string memory candidatePosition) 
+    function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess {
-         candidatesCount++;
-        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, candidatePosition, 0 );
-        
+        //require that candidate not active for an election
+        require(activeCandidate[candidatesCount]==false,"Candidate is already active for an election");
+        //check if the position exist
+        require(Category[_category] != 0,"Category does not exist...");
+        //initial state check
+        if(candidatesCount ==0){
+            candidatesCount++;
+        }
+        candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], 0 );
+        //activate candidate
+        activeCandidate[candidatesCount]=true;
+        candidatesCount++;
         emit CandidateRegisteredEvent(candidatesCount);
     }
+    ///@notice add categories of offices for election
+    function addCategories(string memory _category) public returns(string memory ){
+        //add to the categories array
+        categories.push(_category);
+        //add to the Category map
+        Category[_category]=count;
+        count++;
+        return _category;
+    }
+
+    ///@notice show all categories of offices available for election
+    function showCategories() public view returns(string[] memory){
+        return categories;
+    }
+    ///setup election 
+    function setUpElection (string memory _category,uint256[] memory _candidateID) public returns(bool){
+    //create a new election and add to election queue
+    electionQueue.push(Election(
+        _category,
+        _candidateID,
+        votingProcess
+    ));
+    return true;
+    }
+
 
     /// @notice start voting session
     function startVotingSession() 
@@ -286,20 +336,33 @@ contract ZuriSchool {
             VotingProcess.VotingStarted, votingProcess);        
     }
 
-    function vote(uint candidateId) 
-        onlyRegisteredStakeholder 
-        onlyDuringVotingSession public {
-        require(!stakeholders[msg.sender].hasVoted, 
-            "the stakeholder has already voted");
+    // function vote(uint candidateId) 
+    //     onlyRegisteredStakeholder 
+    //     onlyDuringVotingSession public {
+    //     require(!stakeholders[msg.sender].hasVoted, 
+    //         "the stakeholder has already voted");
 
+    //     stakeholders[msg.sender].hasVoted = true;
+    //     stakeholders[msg.sender].votedCandidateId = candidateId;
+
+    //     candidates[candidateId].voteCount += 1;
+
+    //     emit VotedEvent(msg.sender, candidateId);
+    // }
+     function vote(string memory _category, uint256 _candidateID) public returns (string memory, uint256) {
+        //require that a candidate is registered/active
+        require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
+        //require that a candidate is valid for a vote in a category
+        require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
+        require(votedForCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
         stakeholders[msg.sender].hasVoted = true;
-        stakeholders[msg.sender].votedCandidateId = candidateId;
-
-        candidates[candidateId].voteCount += 1;
-
-        emit VotedEvent(msg.sender, candidateId);
+        //ensuring there are no duplicate votes recorded for a candidates category.
+        uint256 votes = votesForCategory[_candidateID][Category[_category]]+=1;
+        candidates[_candidateID].voteCount = votes;
+        votedForCategory[Category[_category]][msg.sender]=true;
+        emit VotedEvent(msg.sender, _candidateID);
+        return (_category, _candidateID);
     }
-        
     function getWinningCandidateId() onlyAfterVotesCounted public view
        returns (uint) {
        return winningCandidateId;
@@ -405,7 +468,7 @@ contract ZuriSchool {
         Candidate[] memory items = new Candidate[](candidatesCount);
     
         for (uint i = 0; i < candidatesCount; i++) {
-            if (keccak256(abi.encodePacked(candidates[i + 1].position)) == keccak256(abi.encodePacked(_position))) {
+            if (candidates[i + 1].category == Category[_position]) {
                 totalVotes += candidates[i + 1].voteCount;        
                 if ( candidates[i + 1].voteCount > winningVoteCount) {
                     

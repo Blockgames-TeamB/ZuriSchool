@@ -44,6 +44,7 @@ contract ZuriSchool {
         bool VotingStarted;
         bool VotingEnded;
         bool VotesCounted;
+        bool isResultPublic;
     }
 
     /// @notice declare state variable teacher
@@ -109,14 +110,16 @@ contract ZuriSchool {
     mapping(uint256=>bool) public categoryRegistrationStatus;//tracks the catgory if registration is in session or not
     mapping(string=>Candidate) public categoryWinner;
     mapping(string=>Election) public activeElections;
+
+    Election[] public activeElectionArrays;
    
 
     // MODIFIER
-    /// @notice modifier to check that only teachers can call a function
+    /// @notice modifier to check that only the teachers can call a function
     modifier onlyTeacher() {
 
         /// @notice check that sender is a teacher
-        require(msg.sender == teacher, 
+        require(teacher[msg.sender]==true, 
         "You're not one of our teachers");
         _;
     }
@@ -131,16 +134,6 @@ contract ZuriSchool {
         _;
     }
     
-     /// @notice modifier to check that only the teachers can call a function
-    
-    modifier onlyTeachers() {
-
-        /// @notice check that sender is a teacher
-        
-        require( teacher[msg.sender] ==true, 
-        "Access granted to only the teachers");
-        _;
-    }
     /// @notice modifier to check that only the chairman or teacher can call a function
     modifier onlyAccess() {
 
@@ -310,6 +303,7 @@ contract ZuriSchool {
         _candidateID,
         false,
         false,
+        false,
         false
     ));
     return true;
@@ -328,6 +322,8 @@ contract ZuriSchool {
                 activeElections[_category]=electionQueue[i];
                 //start voting session
                 activeElections[_category].VotingStarted=true;
+                //update the activeElectionArrays
+                activeElectionArrays.push(electionQueue[i]);
             }
         }
         emit VotingStartedEvent(_category,true);
@@ -339,7 +335,7 @@ contract ZuriSchool {
         activeElections[_category].VotingEnded = true;
         emit VotingEndedEvent(_category,true);
         emit VotingProcessChangeEvent( 
-            activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
+        activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
     }
     
      
@@ -436,7 +432,7 @@ contract ZuriSchool {
 
     /// @notice remove a director
     function removeDirector(address _oldDirector) public onlyChairman {
-        delete director[_oldDirector];
+        director[_oldDirector]=false;
 
         /// @notice emit event when a director is removed
         emit RemoveDirector(msg.sender, _oldDirector);
@@ -453,7 +449,7 @@ contract ZuriSchool {
 
     /// @notice remove a teacher
     function removeTeacher(address _oldTeacher) public onlyChairman {
-        delete teacher[_oldTeacher];
+        teacher[_oldTeacher] =false;
 
         /// @notice emit event when a teacher is removed
         emit RemoveTeacher(msg.sender, _oldTeacher);
@@ -500,13 +496,10 @@ function uploadDirectors(address[] calldata _address) onlyChairman
        
              stakeholders[_address[i]] = Stakeholder(true, false, 0 );
              }
-        }
-        
-       
-       
+        }  
     }
 
-function uploadStudents(address[] calldata _address) onlyTeachers
+function uploadStudents(address[] calldata _address) onlyAccess
         external
     
     {
@@ -520,31 +513,17 @@ function uploadStudents(address[] calldata _address) onlyTeachers
             //avoid duplication
             if(student[_address[i]] !=true)
           { 
-              students.push(_address[i]);
-               student[_address[i]] =true;
-             stakeholders[_address[i]] = Stakeholder(true, false, 0 );
-             }
-        }
-        
-
-       
+            students.push(_address[i]);
+            student[_address[i]] =true;
+            stakeholders[_address[i]] = Stakeholder(true, false, 0 );
+          }
+        }     
     }
 
 
     /// @notice fetch a specific election
-    function fetchElection() public view returns (Candidate[] memory) {
-    
-        uint currentIndex = 0;
-
-        Candidate[] memory items = new Candidate[](candidatesCount);
-            for (uint i = 0; i < candidatesCount; i++) {
-                
-                    uint currentId = candidates[i + 1].id;
-                    Candidate storage currentItem = candidates[currentId];
-                    items[currentIndex] = currentItem;
-                    currentIndex += 1;
-            }
-                return items;
+    function fetchElection() public view returns (Election[] memory) {
+        return activeElectionArrays;
     }
 
       /// @notice compile votes for an election
@@ -565,7 +544,7 @@ function uploadStudents(address[] calldata _address) onlyTeachers
                     
                     winningVoteCount = candidates[i + 1].voteCount;
                     uint currentId = candidates[i + 1].id;
-                    winnerId= candidates[i + 1].id;
+                    winnerId= currentId;
                     // winningCandidateIndex = i;
                     Candidate storage currentItem = candidates[currentId];
                     items[winningCandidateIndex] = currentItem;
@@ -580,5 +559,10 @@ function uploadStudents(address[] calldata _address) onlyTeachers
         categoryWinner[_position]=candidates[winnerId];
         return (totalVotes, winningVoteCount, items); 
     }
+
+    // //
+    // function viewResults(string memory _category) public returns {
+
+    // }
         
 }

@@ -74,9 +74,6 @@ contract ZuriSchool {
     /// @notice CategoryTrack
     uint256 count = 1;
 
-    /// @notice _disabled is used to disable the voting process
-    bool public _disabled;
-
     /// @notice _paused is used to pause all functions in the smart contract in case of emergency
     bool public _paused;
 
@@ -195,12 +192,6 @@ contract ZuriSchool {
         _;
     }
 
- /// @notice modifier to check that voting is not disabled
-    modifier onlyWhenNotDisabled {
-        require(!_disabled, "Voting currently disabled");
-        _;
-    }
-
  /// @notice modifier to check that contract is not paused
     modifier onlyWhenNotPaused {
         require(!_paused, "Contract is currently paused");
@@ -300,7 +291,7 @@ contract ZuriSchool {
     }
 
     ///@notice add categories of offices for election
-    function addCategories(string memory _category) onlyWhenNotPaused public returns(string memory ){
+    function addCategories(string memory _category) onlyAccess onlyWhenNotPaused public returns(string memory ){
         
         /// @notice add to the categories array
         categories.push(_category);
@@ -316,7 +307,7 @@ contract ZuriSchool {
         return categories;
     }
     /// @notice setup election 
-    function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyWhenNotPaused returns(bool){
+    function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyAccess onlyWhenNotPaused returns(bool){
     
     /// @notice create a new election and add to election queue
     electionQueue.push(Election(
@@ -331,12 +322,12 @@ contract ZuriSchool {
     }
 
     ///clear election queue
-    function clearElectionQueue() public onlyChairman{
+    function clearElectionQueue() public onlyChairman onlyWhenNotPaused{
         delete electionQueue;
     }
     /// @notice start voting session
     function startVotingSession(string memory _category) 
-        public onlyAccess {
+        public onlyChairman onlyWhenNotPaused {
         for(uint256 i = 0;i<electionQueue.length;i++){
             if(compareStrings(electionQueue[i].category,_category)){
                 //add election category to active elections
@@ -352,7 +343,7 @@ contract ZuriSchool {
     
     /// @notice end voting session
     function endVotingSession(string memory _category) 
-        public onlyAccess {
+        public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         emit VotingEndedEvent(_category,true);
         emit VotingProcessChangeEvent( 
@@ -362,7 +353,7 @@ contract ZuriSchool {
      
     ///@notice function for voting process
     ///@return category and candidate voted for
-    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) returns (string memory, uint256) {
+    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) onlyWhenNotPaused returns (string memory, uint256) {
         //require that the session for voting is active
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         //require that the session for voting is not yet ended
@@ -386,18 +377,18 @@ contract ZuriSchool {
     
         return (_category, _candidateID);
     }
-    function getWinningCandidateId(string memory _category) onlyAfterVotesCounted(_category) public view
+    function getWinningCandidateId(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (uint) {
        return categoryWinner[_category].id;
     }
     
     function getWinningCandidateName(string memory _category) 
-       onlyAfterVotesCounted(_category) public view
+       onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (string memory,Candidate memory) {
        return (categoryWinner[_category].name,categoryWinner[_category]);
     }  
     
-    function getWinningCandidateVoteCounts(string memory _category) onlyAfterVotesCounted(_category) public view
+    function getWinningCandidateVoteCounts(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (uint) {
        return categoryWinner[_category].voteCount;
     }   
@@ -416,7 +407,7 @@ contract ZuriSchool {
     }     
     
     /// @notice check if address is the chairman
-    function isChairman(address _address) public onlyWhenNotPaused view 
+    function isChairman(address _address) onlyWhenNotPaused public view 
         returns (bool) {
         return _address == chairman;
     }     
@@ -480,7 +471,7 @@ contract ZuriSchool {
         external
     
     {
-        //loop through the loyal customers and map rewards from the allocatedQuotas
+        //loop through the list of teachers and upload
         require(
             _address.length >0,
             "Upload array of addresses"
@@ -504,7 +495,7 @@ function uploadDirectors(address[] calldata _address) onlyChairman onlyWhenNotPa
         external
     
     {
-        //loop through the loyal customers and map rewards from the allocatedQuotas
+        //loop through the list of directors and upload
         require(
             _address.length >0,
             "Upload array of addresses"
@@ -520,11 +511,11 @@ function uploadDirectors(address[] calldata _address) onlyChairman onlyWhenNotPa
         }  
     }
 
-function uploadStudents(address[] calldata _address) onlyAccess
+function uploadStudents(address[] calldata _address) onlyAccess onlyWhenNotPaused
         external
     
     {
-        //loop through the loyal customers and map rewards from the allocatedQuotas
+        //loop through the list of students and upload
         require(
             _address.length >0,
             "Upload array of addresses"
@@ -542,12 +533,12 @@ function uploadStudents(address[] calldata _address) onlyAccess
     }
 
     /// @notice fetch a specific election
-    function fetchElection() public view returns (Election[] memory) {
+    function fetchElection() onlyWhenNotPaused public view returns (Election[] memory) {
         return activeElectionArrays;
     }
 
       /// @notice compile votes for an election
-    function compileVotes(string memory _position) onlyAccess public  returns (uint total, uint winnigVotes, Candidate[] memory){
+    function compileVotes(string memory _position) onlyAccess onlyWhenNotPaused public  returns (uint total, uint winnigVotes, Candidate[] memory){
         //require that the category voting session is over before compiling votes
         require(activeElections[_position].VotingEnded == true,"This session is still active for voting");
         uint winningVoteCount = 0;

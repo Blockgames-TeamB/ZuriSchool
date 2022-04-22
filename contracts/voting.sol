@@ -19,7 +19,7 @@ import "./ZuriSchoolToken.sol";
 /// @title A Voting Dapp
 contract ZuriSchool {
 
-     constructor(address _tokenAddr) {
+    constructor(address _tokenAddr) {
         zstoken = ZuriSchoolToken(_tokenAddr);
         zstoken.mint(msg.sender, 10000 * 10**18);
         /// @notice add chairman is the deployer of the contract
@@ -459,7 +459,6 @@ contract ZuriSchool {
         return (_category, _candidateID);
     }
 
-    
     /// @notice retrieve winning vote count in a specific category
     function getWinningCandidate(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (Candidate memory) {
@@ -499,6 +498,7 @@ contract ZuriSchool {
             }
 
         } 
+
         /// @notice update Election status
         activeElections[_position].VotesCounted=true;
         
@@ -521,3 +521,4 @@ contract ZuriSchool {
         return (categoryWinner[_category],_category);
         } 
     }
+    

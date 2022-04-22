@@ -95,7 +95,7 @@ $ npm i -D hardhat
 
 $ npm install
 
-$ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@nomiclabs/hardhat-ethers" "ethers" "web3" "@nomiclabs/hardhat-web3" "@nomiclabs/hardhat-etherscan" "@openzeppelin/contracts" "dotenv"
+$ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@nomiclabs/hardhat-ethers" "ethers" "web3" "@nomiclabs/hardhat-web3" "@nomiclabs/hardhat-etherscan" "@openzeppelin/contracts" "dotenv" "@tenderly/hardhat-tenderly" "hardhat-gas-reporter" "hardhat-deploy"
 ```
 > ### Env Setup
  Next create a `.env` file by using the sample.env. Retrieve your information from the relevant sites and input the information where needed in the `.env` file.
@@ -163,7 +163,7 @@ $ npx hardhat run scripts/deploy.js --network rinkeby
 > ### Verify
 - To verify the smartcontract:
 ```
-$ npx hardhat verify __________________ --network rinkeby
+$ npx hardhat verify 0xd12702e5F82FCF64a51F39eE57FcfF77BAF54Aac --network rinkeby
 ```
 
 #
@@ -226,7 +226,7 @@ $ npx hardhat coverage --network localhost --show-stack-traces
 #
 > ## ZuriSchool Contract Address
 
-
+- https://rinkeby.etherscan.io/address/0xd12702e5F82FCF64a51F39eE57FcfF77BAF54Aac#code
 #  
 > ## Live Link
   

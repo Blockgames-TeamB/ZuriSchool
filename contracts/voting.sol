@@ -20,7 +20,7 @@ import "./ZuriSchoolToken.sol";
 contract ZuriSchool {
     constructor() {
         
-        zstoken.mint(msg.sender, 1000 * 10**18);
+        // zstoken.mint(msg.sender, 1000 * 10**18);
 
         /// @notice add chairman is the deployer of the contract
         chairman = msg.sender;
@@ -54,7 +54,7 @@ contract ZuriSchool {
 
     /// -------------------------- VARIABLES ----------------------------------- ///
     /// @notice state variable for tokens
-    ZuriSchoolToken public zstoken;
+    // ZuriSchoolToken public zstoken;
 
     /// @notice declare state variable teacher
     address[] public teachers;

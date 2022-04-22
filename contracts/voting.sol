@@ -94,7 +94,7 @@ contract ZuriSchool {
 
 
     /// ---------------------- MAPPING ------------------------------------ ///
-    /// @notice mapping for list of stakeholders
+    /// @notice mapping for list of stakeholders addresses
     mapping(address => Stakeholder) public stakeholders;
 
     /// @notice mapping for list of stakeholders current status
@@ -450,7 +450,8 @@ contract ZuriSchool {
         return categories;
     }
 
-    /// @notice setup election 
+    /// @notice setup election
+    /// @dev takes in category and an array of candidates
     function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyAccess onlyWhenNotPaused returns(bool){
     
     /// @notice create a new election and add to election queue

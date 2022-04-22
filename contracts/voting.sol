@@ -7,7 +7,6 @@ pragma solidity ^0.8.10;
 // pause & unpause contract
 
 
-
 ///@dev test process
 ///***register address as stakeholders
 ///-1- add category
@@ -17,6 +16,7 @@ pragma solidity ^0.8.10;
 ///-5- vote 
 ///-6- end voting session
 ///-7- compile votes
+
 
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
@@ -38,6 +38,7 @@ contract ZuriSchool {
         uint voteCount; 
     }
     
+    /// @notice structure for election
     struct Election {
         string category;
         uint256[] candidatesID;
@@ -56,7 +57,7 @@ contract ZuriSchool {
     /// @notice declare state variable director
     address[] public directors;
     
-        /// @notice declare array of state variable student
+    /// @notice declare array of state variable student
     address[] public students;
 
     /// @notice declare state variable candidatesCount
@@ -74,8 +75,11 @@ contract ZuriSchool {
     /// @notice CategoryTrack
     uint256 count = 1;
 
-    /// election queue
+    /// @notice return election queue
     Election[] public electionQueue;
+
+    /// @notice 
+    Election[] public activeElectionArrays;
 
 
     // MAPPING
@@ -106,12 +110,14 @@ contract ZuriSchool {
     /// @notice mapping for converting category string to uint
     mapping(string => uint256) public Category;
     
-
-    mapping(uint256=>bool) public categoryRegistrationStatus;//tracks the catgory if registration is in session or not
+    // //tracks the catgory if registration is in session or not
+    // mapping(uint256=>bool) public categoryRegistrationStatus;
+    
+    /// @notice checks the winner of an election category
     mapping(string=>Candidate) public categoryWinner;
-    mapping(string=>Election) public activeElections;
 
-    Election[] public activeElectionArrays;
+    /// @notice mapping for the active election
+    mapping(string=>Election) public activeElections;
    
 
     // MODIFIER
@@ -138,7 +144,7 @@ contract ZuriSchool {
     modifier onlyAccess() {
 
         /// @notice check that sender is the chairman
-        require(msg.sender == chairman || teacher[msg.sender] ==true, 
+        require(msg.sender == chairman || teacher[msg.sender] == true, 
         "Access granted to only the chairman");
         _;
     }
@@ -243,17 +249,15 @@ contract ZuriSchool {
 
 
     constructor() {
+        /// @notice add chairman a stakeholder
         chairman = msg.sender;
-        //add chairman a stakeholder
-
     }
-     //helper function compare strings
+    
+    /// @dev helper function compare strings
     function compareStrings(string memory _str, string memory str) private pure returns (bool) {
         return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
     }
-    
-    
-    
+
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess {
@@ -269,12 +273,14 @@ contract ZuriSchool {
             candidatesCount++;
         }
         
+        /// @notice add to candidate map by passing in the candidateCount aka id
         candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], 0 );
         
-        /// @notice activate candidate
+        /// @notice check if candidate is active
         activeCandidate[candidatesCount] = true;
         candidatesCount ++;
         
+        /// @notice emit event when candidate is registered
         emit CandidateRegisteredEvent(candidatesCount);
     }
 
@@ -294,6 +300,7 @@ contract ZuriSchool {
     function showCategories() public view returns(string[] memory){
         return categories;
     }
+
     /// @notice setup election 
     function setUpElection (string memory _category,uint256[] memory _candidateID) public returns(bool){
     
@@ -309,10 +316,11 @@ contract ZuriSchool {
     return true;
     }
 
-    ///clear election queue
+    /// @notice clear election queue
     function clearElectionQueue() public onlyChairman{
         delete electionQueue;
     }
+    
     /// @notice start voting session
     function startVotingSession(string memory _category) 
         public onlyAccess {
@@ -332,20 +340,25 @@ contract ZuriSchool {
     /// @notice end voting session
     function endVotingSession(string memory _category) 
         public onlyAccess {
+        
         activeElections[_category].VotingEnded = true;
+        
         emit VotingEndedEvent(_category,true);
-        emit VotingProcessChangeEvent( 
-        activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
+        emit VotingProcessChangeEvent(
+            activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
     }
     
      
-    ///@notice function for voting process
-    ///@return category and candidate voted for
+    /// @notice function for voting process
+    /// @return category and candidate voted for
     function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) returns (string memory, uint256) {
-        //require that the session for voting is active
+        
+        /// @notice require that the session for voting is active
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
-        //require that the session for voting is not yet ended
+        
+        /// @notice require that the session for voting is not yet ended
         require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
+        
         /// @notice require that a candidate is registered/active
         require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
     
@@ -519,7 +532,6 @@ function uploadStudents(address[] calldata _address) onlyAccess
           }
         }     
     }
-
 
     /// @notice fetch a specific election
     function fetchElection() public view returns (Election[] memory) {

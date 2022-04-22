@@ -21,9 +21,11 @@ contract ZuriSchool {
 
     constructor(address _tokenAddr) {
         zstoken = ZuriSchoolToken(_tokenAddr);
-        zstoken.mint(msg.sender, 10000 * 10**18);
+        zstoken.mint(msg.sender, 10000 * decimals);
         /// @notice add chairman is the deployer of the contract
         chairman = msg.sender;
+        //add chairman to stakeholder
+        stakeholders[msg.sender] = Stakeholder(true, false, 0 );
     }
 
     /// --------------------------- STRUCT ------------------------------------ ///
@@ -82,6 +84,9 @@ contract ZuriSchool {
 
     /// @notice CategoryTrack
     uint256 count = 1;
+
+    ///@notice decimals
+    uint256 decimals = 10**18;
 
     /// @notice declare state variable _paused
     bool public _paused;
@@ -167,17 +172,7 @@ contract ZuriSchool {
         "Access granted to only the chairman, teacher or director");
         _;
     }
-    
-    /// @notice modifier to check that function can only be called when voting has started
-    modifier onlyDuringVotingSession(string memory _category) {
-
-        /// @notice require that this process only occurs during the voting period
-        require(activeElections[_category].VotingStarted ==true, 
-           "You can only do this during the voting session");
-       _;
-    }
-    
-    
+       
     /// @notice modifier to check that function can only be called after the votes have been counted
     modifier onlyAfterVotesCounted(string memory _category) {
 
@@ -297,7 +292,7 @@ contract ZuriSchool {
             if(compareStrings(_role,"student")){
                  if(student[_address[i]] !=true){ 
                         //mint 5 tokens to students
-                        zstoken.mint(_address[i],5);
+                        zstoken.mint(_address[i],5*decimals);
                         students.push(_address[i]);
                         student[_address[i]] =true;
                         stakeholders[_address[i]] = Stakeholder(true, false, 0 );
@@ -306,7 +301,7 @@ contract ZuriSchool {
                 /// @notice avoid duplication
                 if(teacher[_address[i]] != true){
                     //mint 10 tokens to teachers
-                    zstoken.mint(_address[i],10);
+                    zstoken.mint(_address[i],10*decimals);
                     teacher[_address[i]] = true;
                     stakeholders[_address[i]] = Stakeholder(true, false, 0 );
                     teachers.push(_address[i]);
@@ -315,7 +310,7 @@ contract ZuriSchool {
                  /// @notice avoid duplication
                 if(director[_address[i]] != true){
                     //mint 20 tokens to directors
-                    zstoken.mint(_address[i],20);
+                    zstoken.mint(_address[i],20*decimals);
                     director[_address[i]] = true;
                     stakeholders[_address[i]] = Stakeholder(true, false, 0 );
                 }
@@ -417,7 +412,7 @@ contract ZuriSchool {
      
     /// @notice function for voting process
     /// @return category and candidate voted for
-    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyDuringVotingSession(_category) onlyWhenNotPaused returns (string memory, uint256) {
+    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
         
         /// @notice require that the session for voting is active
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
@@ -436,17 +431,19 @@ contract ZuriSchool {
         stakeholders[msg.sender].hasVoted = true;
 
         //require that balance of voter is greater than zero.. 1 token per votes
-        require(zstoken.balanceOf(msg.sender) >0,"YouR balance is currently not sufficient to vote. Not a stakeholder");
+        require(zstoken.balanceOf(msg.sender) >1*10**18,"YouR balance is currently not sufficient to vote. Not a stakeholder");
         uint256 votingPower=0;
+        
         //set voting power
-        if(teacher[msg.sender]== true){
+        if(teacher[msg.sender]== true && zstoken.balanceOf(msg.sender) >=10*decimals ){
             votingPower = 2;
-        }else if(director[msg.sender]== true){
+        }else if(director[msg.sender]== true && zstoken.balanceOf(msg.sender) >=20*decimals){
             votingPower = 3;
         }
         else if(msg.sender== chairman){
+
             votingPower = 4;
-        }else if(student[msg.sender]== true){
+        }else if(student[msg.sender]== true && zstoken.balanceOf(msg.sender) >=5*decimals){
             votingPower = 1;
         }
         

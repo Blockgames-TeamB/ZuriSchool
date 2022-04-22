@@ -101,7 +101,7 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY,
+    rinkeby: process.env.ETHERSCAN_KEY,
   },
   plugins:["solidity-coverage"]
 };
@@ -382,6 +382,3 @@ task("send", "Send ETH")
     debug(JSON.stringify(txRequest, null, 2));
     return send(fromSigner, txRequest);
   });
-
-
-

@@ -6,9 +6,9 @@ import "./ZuriSchoolToken.sol";
 /// @dev flow process
 /// @dev -1- register address as stakeholders
 /// @dev -2- add category
-/// @dev -3-  register candidates
+/// @dev -3- register candidates
 /// @dev -4- setup election
-/// @dev -5-start voting session
+/// @dev -5- start voting session
 /// @dev -6- vote 
 /// @dev -7- end voting session
 /// @dev -8- compile votes
@@ -132,10 +132,7 @@ contract ZuriSchool {
 
     /// @notice tracks the active election
     mapping(string=>Election) public activeElections;
-
-    /// @notice mapping for the active election
-    mapping(string=>Election) public activeElections;
-   
+  
 
     /// ----------------------- MODIFIER -------------------------------------- ///
     /// @notice modifier to check that only the registered stakeholders can call a function

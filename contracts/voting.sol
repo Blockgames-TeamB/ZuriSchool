@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 import "./ZuriSchoolToken.sol";
 
 
-/// @dev flow process
+/// @notice flow process
 /// @dev -1- register address as stakeholders
 /// @dev -2- add category
 /// @dev -3- register candidates

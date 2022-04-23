@@ -76,11 +76,11 @@ describe("Check Role of a stakeholder...",function(){
         console.log('\t',"Passed ....");     
     });
     it("Should be able to check role if role is student",async function(){
-        const [owner,secondAddress] = await ethers.getSigners();
+        const [owner,secondAddress,thirdAddress,fourthAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to Check the role is a student.");
-        paused = await votingContract.connect(owner).checkRole("student",secondAddress.address);
+        paused = await votingContract.connect(owner).checkRole("student",fourthAddress.address);
         const tx = await paused;
-        expect(tx).to.be.equal(false);
+        expect(tx).to.be.equal(true);
         console.log('\t',"Passed ....");     
     });
 })
@@ -259,9 +259,8 @@ describe("Add Categories of an Election...",function(){
         const [owner,secondAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to Add Categories when contract is not paused.");
         paused = await votingContract.connect(owner).addCategories("senate");
-        const tx = await paused;
-        console.log("new pausing",tx)
-        expect(tx).to.be.equal("senate");
+        const tx = await paused.wait();
+        expect(tx.status).to.be.equal(1);
         console.log('\t',"Passed ....");  
     });
     it("Should not be able to add a category when contract is paused",async function(){
@@ -290,8 +289,8 @@ describe("Add Categories of an Election...",function(){
 
         addTeacher = await votingContract.connect(owner).assignRole("teacher",secondAddress.address);
         addCategory1 =await votingContract.connect(secondAddress).addCategories("headboy");
-        const tx = await addCategory1;
-        expect(tx).to.be.equal("headboy");
+        const tx = await addCategory1.wait();
+        expect(tx.status).to.be.equal(1);
         console.log('\t',"Passed ....");
     });
 });
@@ -299,97 +298,194 @@ describe("Add Categories of an Election...",function(){
 describe("Show Categories of an Election...",function(){
     it("Should not be able to show election categories when contract is paused",async function(){
 
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Show Categories when contract is paused.");
+        //pause the contract
+        const paused = await votingContract.connect(owner).setPaused(true);
+       await expect(votingContract.connect(owner).showCategories()).to.be.revertedWith("Contract is currently paused");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
+   
     });
     it("Should be able to show election categories when contract is unpaused",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Show Categories when contract is not paused.");
+        paused = await votingContract.connect(owner).showCategories();
+        
+        expect(paused.length).to.be.greaterThanOrEqual(0);
+        console.log('\t',"Passed ...."); 
     });
 })
 ///@notice test to Set up an Election.
 describe("Set up Election...",function(){
-    it("Should not be able to Set up an Election if caller is not the chairman",async function(){
-
+    it("Should not be able to Set up an Election if caller is not the chairman or teacher",async function(){
+        const [owner,secondAddress,thirdAddress,fourthAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Set up Election as a non chairman....");
+        await expect(votingContract.connect(fourthAddress).setUpElection("president",[1,2])).to.be.revertedWith("Access granted to only the chairman or teacher");
+        console.log('\t',"Passed ....");
     });
-    it("Should be able to Set up an Election if caller is the chairman",async function(){
-
-    });
-    it("Should not be able to Set up an Election if caller is not a teacher ",async function(){
-
-    });
-    it("Should be able to Set up an Election if caller is a teacher ",async function(){
-
+    it("Should be able to Set up an Election if caller is the chairman or teacher",async function(){
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Set up Election when caller is the chairman.");
+        setUpElection = await votingContract.connect(owner).setUpElection("president",[1,2]);
+        const tx = await setUpElection.wait();
+        expect(tx.status).to.be.equal(1);
+        console.log('\t',"Passed ...."); 
+   
     });
     it("Should only be able to Set up an Election when contract is not paused",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Set up Election when contract is paused.");
+        //pause the contract
+        const paused = await votingContract.connect(owner).setPaused(true);
+       await expect(votingContract.connect(owner).setUpElection("president",[1,2])).to.be.revertedWith("Contract is currently paused");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
     });
-    it("Should not be able to Set up an Election when contract is paused",async function(){
-
-    });
+    
     
 })
 ///@notice test to Clear Election Queue.
 describe("Clear Election Queue...",function(){
     it("Should not be able to Clear Election Queue if caller is not the chairman",async function(){
-
+        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Clear Election Queue as a non chairman....");
+        await expect(votingContract.connect(secondAddress).clearElectionQueue()).to.be.revertedWith("Access granted to only the chairman");
+        console.log('\t',"Passed ....");
     });
     it("Should be able to Clear Election Queue if caller is the chairman",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to assign role as a chairman....");
+        //add address as a stakeholder
+        clearQueue = await votingContract.connect(owner).clearElectionQueue();
+        const tx = await clearQueue.wait();
+        expect(tx.status).to.equal(1);
+        console.log('\t',"Passed ....");
     });
-    it("Should only be able to Clear Election Queue when contract is not paused",async function(){
 
-    });
     it("Should not be able to Clear Election Queue when contract is paused",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Clear Election Queue when contract is paused.");
+        //pause the contract
+        const paused = await votingContract.connect(owner).setPaused(true);
+       await expect(votingContract.connect(owner).clearElectionQueue()).to.be.revertedWith("Contract is currently paused");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
     });
     
 })
 ///@notice test to Start Voting Session.
 describe("Start Voting Session...",function(){
     it("Should not be able to Start Voting Session if caller is not the chairman",async function(){
-
+        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Clear Election Queue as a non chairman....");
+        await expect(votingContract.connect(secondAddress).startVotingSession("president")).to.be.revertedWith("Access granted to only the chairman");
+        console.log('\t',"Passed ....");
     });
     it("Should be able to Start Voting Session if caller is the chairman",async function(){
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Set up Election when caller is the chairman.");
+        setUpElection1 = await votingContract.connect(owner).setUpElection("president",[1,2]);
 
+        const tx = await setUpElection1.wait();
+        expect(tx.status).to.be.equal(1);
+        startVotinsession = await votingContract.connect(owner).startVotingSession("president");
+        const tx1 = await startVotinsession.wait();
+        expect(tx1.status).to.be.equal(1);
+        console.log('\t',"Passed ....");
     });
-    it("Should only be able to Start Voting Session when contract is not paused",async function(){
-
-    });
+    
     it("Should not be able to Start Voting Session when contract is paused",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Check the role when contract is paused.");
+        //pause the contract
+        const paused = await votingContract.connect(owner).setPaused(true);
+       await expect(votingContract.connect(owner).startVotingSession("president")).to.be.revertedWith("Contract is currently paused");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
     });
     
 })
 ///@notice test to End Voting Session.
 describe("End Voting Session...",function(){
     it("Should not be able to End Voting Session if caller is not the chairman",async function(){
-
+        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Clear Election Queue as a non chairman....");
+        await expect(votingContract.connect(secondAddress).endVotingSession("president")).to.be.revertedWith("Access granted to only the chairman");
+        console.log('\t',"Passed ....");
     });
     it("Should be able to End Voting Session if caller is the chairman",async function(){
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to End Voting Session when caller is the chairman.");
+        setUpElection1 = await votingContract.connect(owner).setUpElection("president",[1,2]);
 
-    });
-    it("Should only be able to End Voting Session when contract is not paused",async function(){
+        const tx = await setUpElection1.wait();
+        expect(tx.status).to.be.equal(1);
+        startVotinsession = await votingContract.connect(owner).startVotingSession("president");
+        const tx1 = await startVotinsession.wait();
+        expect(tx1.status).to.be.equal(1);
+        endVotingSession = await votingContract.connect(owner).endVotingSession("president");
+        const tx2 = await endVotingSession.wait();
+        expect(tx2.status).to.be.equal(1);
 
+        console.log('\t',"Passed ....");
     });
+  
     it("Should not be able to End Voting Session when contract is paused",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Check the role when contract is paused.");
+        //pause the contract
+        const paused = await votingContract.connect(owner).setPaused(true);
+       await expect(votingContract.connect(owner).endVotingSession("president")).to.be.revertedWith("Contract is currently paused");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
+   
     });
     
 })
 ///@notice test for Voting for a Category.
 describe("Voting For a Candidate Category ...",function(){
+    beforeEach(async function(){
+        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress] = await ethers.getSigners();
+        addC = await votingContract.connect(owner).addCategories("headboy");
+        setUpElection1 = await votingContract.connect(owner).setUpElection("president",[1,2]);
+        const tx = await setUpElection1.wait();
+        expect(tx.status).to.be.equal(1);
+        setUpElection2 = await votingContract.connect(owner).setUpElection("headboy",[1,2]);
+        const tx2 = await setUpElection2.wait();
+        expect(tx2.status).to.be.equal(1);
+        
+    });
     it("Should not be able to  vote if caller is not stakeholder",async function(){
-
+        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress] = await ethers.getSigners();
+        startVotinsession = await votingContract.connect(owner).startVotingSession("president");
+        const tx1 = await startVotinsession.wait();
+        expect(tx1.status).to.be.equal(1);
+        console.log('\t',"Attempting to setup election.");
+        console.log('\t',"Attempting to vote.");
+        await expect(votingContract.connect(fifthAddress).vote("president",1)).to.be.revertedWith("You must be a registered stakeholder");
+        console.log('\t',"Passed ....");   
     });
-    it("Should be able to vote if caller is a stakeholder",async function(){
-
-    });
-    it("Should only be able to vote when contract is not paused",async function(){
-
-    });
+    
     it("Should not be able to vote when contract is paused",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to vote when contract is paused.");
+        startVotinsession = await votingContract.connect(owner).startVotingSession("president");
+        const tx1 = await startVotinsession.wait();
+        expect(tx1.status).to.be.equal(1);
+        //pause the contract
+        const paused = await votingContract.connect(owner).setPaused(true);
+       await expect(votingContract.connect(owner).vote("president",1)).to.be.revertedWith("Contract is currently paused");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
     });
     it("Should not be able to vote when if voting has not commenced ",async function(){
-
+        const [owner,secondAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to vote when voting has not commenced.");
+    
+       await expect(votingContract.connect(owner).vote("headboy",1)).to.be.revertedWith("Voting has not commmenced for this Category");
+       console.log('\t',"Passed ....")
+       const unpaused = await votingContract.connect(owner).setPaused(false);
     });
     it("Should not be able to vote if category of candidate is not in an election, approved by chairman",async function(){
 

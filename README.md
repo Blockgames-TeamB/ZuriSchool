@@ -226,8 +226,11 @@ $ npx hardhat coverage --network localhost --show-stack-traces
 #
 > ## ZuriSchool Contract Address
 
-- https://rinkeby.etherscan.io/address/0xd12702e5F82FCF64a51F39eE57FcfF77BAF54Aac#code
-#  
+https://rinkeby.etherscan.io/address/0x3Ec541523046375f0DAf5334Cf656eaFDa7DAA71#code
+# 
+
+
+
 > ## Live Link
   
   

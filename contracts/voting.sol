@@ -324,9 +324,6 @@ contract ZuriSchool {
     function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess onlyWhenNotPaused {
 
-        /// @notice check that candidate not already active for an election
-        require(activeCandidate[candidatesCount]==false,"Candidate is already active for an election");
-        
         /// @notice check if the position already exists
         require(Category[_category] != 0,"Category does not exist...");
         

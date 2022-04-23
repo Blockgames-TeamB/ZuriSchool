@@ -204,7 +204,6 @@ contract ZuriSchool {
             address stakeholderAddress
     ); 
 
-
     /// @notice emit when role is removed
     event RemoveRole(address remover, address addr);
 
@@ -243,7 +242,7 @@ contract ZuriSchool {
         return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
     }
 
-    /// @notice check if address is a teacher
+    /// @notice check stakeholder role
     function checkRole(string memory _role,address _address) onlyWhenNotPaused public view 
         returns (bool) {
         bool result;
@@ -259,6 +258,7 @@ contract ZuriSchool {
         return  result;
     }     
     
+    /// @notice function to assign role to stakeholder
     function assignRole(string memory _role,address _stakeHolder) onlyChairman public{
         require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role to a non stakeholder.");
         if(compareStrings(_role,"teacher")){
@@ -270,6 +270,7 @@ contract ZuriSchool {
         emit AssignedRole(msg.sender, _stakeHolder);
     }    
 
+    /// @notice function to remove role from stakeholder
     function removeRole(string memory _role ,address _addr) public onlyChairman{
         if(compareStrings(_role,"teacher")){
             teacher[_addr] = false;
@@ -282,6 +283,7 @@ contract ZuriSchool {
         emit RemoveRole(msg.sender,_addr);
     }
 
+    /// @notice function to register stakeholder
     function uploadStakeHolder(string memory _role,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
         
         /// @notice loop through the list of students and upload
@@ -291,29 +293,34 @@ contract ZuriSchool {
         );
         
         for (uint i = 0; i < _address.length; i++) {
-        
-            /// @notice avoid duplication
+            
+            /// @notice check if stakeholder is a student
             if(compareStrings(_role,"student")){
+                /// @notice avoid duplication
                  if(student[_address[i]] !=true){ 
-                        //mint 5 tokens to students
+                        /// @notice mint 5 tokens to students
                         zstoken.mint(_address[i],5);
                         students.push(_address[i]);
                         student[_address[i]] =true;
                         stakeholders[_address[i]] = Stakeholder(true, false, 0 );
                     }
+
+            /// @notice check if stakeholder is a teacher
             } else if(compareStrings(_role,"teacher")) {
                 /// @notice avoid duplication
                 if(teacher[_address[i]] != true){
-                    //mint 10 tokens to teachers
+                    /// @notice mint 10 tokens to teachers
                     zstoken.mint(_address[i],10);
                     teacher[_address[i]] = true;
                     stakeholders[_address[i]] = Stakeholder(true, false, 0 );
                     teachers.push(_address[i]);
                 }
+
+            /// @notice check if stakeholder is a director
             }else if(compareStrings(_role,"director")) {
                  /// @notice avoid duplication
                 if(director[_address[i]] != true){
-                    //mint 20 tokens to directors
+                    /// @notice mint 20 tokens to directors
                     zstoken.mint(_address[i],20);
                     director[_address[i]] = true;
                     stakeholders[_address[i]] = Stakeholder(true, false, 0 );
@@ -324,6 +331,7 @@ contract ZuriSchool {
         /// @notice emit stakeholder registered event
         emit StakeholderRegisteredEvent(_role,_address);
     }
+    
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess onlyWhenNotPaused {

@@ -40,29 +40,13 @@ function mnemonic() {
 }
 module.exports = {
   defaultNetwork,
-  /**
-   * gas reporter configuration that let's you know
-   * an estimate of gas for contract deployments and function calls
-   * More here: https://hardhat.org/plugins/hardhat-gas-reporter.html
-   */
   gasReporter: {
     currency: "USD",
     coinmarketcap: process.env.COINMARKETCAP || null,
   },
-  // if you want to deploy to a testnet, mainnet, or xdai, you will need to configure:
-  // 1. An Infura key (or similar)
-  // 2. A private key for the deployer
-  // DON'T PUSH THESE HERE!!!
-  // An `example.env` has been provided in the Hardhat root. Copy it and rename it `.env`
-  // Follow the directions, and uncomment the network you wish to deploy to.
   networks: {
     localhost: {
       url: "http://localhost:7545",
-      /*      
-        notice no mnemonic here? it will just use account 0 of the hardhat node to deploy
-        (you can put in a mnemonic here to set the deployer locally)
-      
-      */
     },
     rinkeby: {
       url: process.env.RINKEBY_ALCHEMY_API_URL,
@@ -101,8 +85,10 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY,
-  },
+    apiKey: {
+    rinkeby: process.env.ETHERSCAN_KEY,
+  }
+},
   plugins:["solidity-coverage"]
 };
 const DEBUG = false;
@@ -382,6 +368,3 @@ task("send", "Send ETH")
     debug(JSON.stringify(txRequest, null, 2));
     return send(fromSigner, txRequest);
   });
-
-
-

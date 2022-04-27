@@ -163,8 +163,10 @@ $ npx hardhat run scripts/deploy.js --network rinkeby
 > ### Verify
 - To verify the smartcontract:
 ```
-$ npx hardhat verify 0xd12702e5F82FCF64a51F39eE57FcfF77BAF54Aac --network rinkeby
+$ npx hardhat verify 0xD6c7Bc7089DBe4DC6D493E35eaC3dAf5b18FC04d 0xC291B856723080177f983CB32C275D1e56f91841 --network rinkeby
 ```
+- Note for verificition, the first address is the ZuriSchoolToken address, while the second is the ZuriSchool address.
+
 
 #
 > ## Setup the Frontend

@@ -21,7 +21,6 @@ async function main(){
     deployedZuriTokenContract.address
   );
 
-
  console.log("deploying ZuriVoting contract.......")
     const ZuriVotingContract = await ethers.getContractFactory("ZuriSchool");
      // here we deploy the contract

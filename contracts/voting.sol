@@ -2,10 +2,9 @@
 pragma solidity ^0.8.10;
 import "./ZuriSchoolToken.sol";
 
+
 ///students = ["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB"]
-
 ///teachers = ["0x617F2E2fD72FD9D5503197092aC168c91465E7f2","0x17F6AD8Ef982297579C203069C1DbfFE4348c372","0x5c6B0f7Bf3E7ce046039Bd8FABdfD3f9F5021678"]
-
 ///director = ["0x03C6FcED478cBbC9a4FAB34eF9f40767739D1Ff7","0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C","0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC"]
 
 /// @dev flow process
@@ -22,18 +21,31 @@ import "./ZuriSchoolToken.sol";
 
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
+
+// interface ZuriSchoolToken {
+//     /// @dev balanceOf returns the number of token owned by the given address
+//     /// @param owner - address to fetch number of token for
+//     /// @return Returns the number of tokens owned
+//     function balanceOf(address owner) external view returns (uint256);
+// }
+
+
 contract ZuriSchool {
 
     constructor(address _tokenAddr) {
         zstoken = ZuriSchoolToken(_tokenAddr);
+        
+        /// @notice mint zst to contract owner
         zstoken.mint(msg.sender, 10000 * decimals);
+        
         /// @notice add chairman is the deployer of the contract
         chairman = msg.sender;
-        //add chairman to stakeholder
+        
+        /// @notice add chairman as a stakeholder
         stakeholders[msg.sender] = Stakeholder("chairman",true, false, 0,4 );
     }
 
-    /// --------------------------- STRUCT ------------------------------------ ///
+   /// ---------------------------------------- STRUCT ------------------------------------------ ///
     /// @notice structure for stakeholders
     struct Stakeholder {
         string role;
@@ -62,7 +74,7 @@ contract ZuriSchool {
         uint256 totalVotesCasted;
     }
 
-    /// -------------------------- VARIABLES ----------------------------------- ///
+    /// ---------------------------------------- VARIABLES ------------------------------------- ///
     /// @notice state variable for tokens
     ZuriSchoolToken public zstoken;
 
@@ -94,7 +106,7 @@ contract ZuriSchool {
     Election[] public activeElectionArrays;
 
 
-    /// ---------------------- MAPPING ------------------------------------ ///
+    /// ------------------------------------- MAPPING ------------------------------------------ ///
     /// @notice mapping for list of stakeholders addresses
     mapping(address => Stakeholder) public stakeholders;
 
@@ -120,8 +132,7 @@ contract ZuriSchool {
     mapping(string=>Election) public activeElections;
   
 
-
-    /// ----------------------- MODIFIER -------------------------------------- ///
+    /// ------------------------------------- MODIFIER ------------------------------------------- ///
     /// @notice modifier to check that only the registered stakeholders can call a function
     modifier onlyRegisteredStakeholder() {
 
@@ -148,15 +159,6 @@ contract ZuriSchool {
         "Access granted to only the chairman or teacher");
         _;
     }
-
-    /// @notice modifier to check that only the chairman, teacher or director can call a function
-    modifier onlyGranted() {
-
-        /// @notice check that sender is the chairman
-        require ((msg.sender == chairman) || compareStrings(stakeholders[msg.sender].role,"teacher") || compareStrings(stakeholders[msg.sender].role,"director"), 
-        "Access granted to only the chairman, teacher or director");
-        _;
-    }
        
     /// @notice modifier to check that function can only be called after the votes have been counted
     modifier onlyAfterVotesCounted(string memory _category) {
@@ -174,7 +176,7 @@ contract ZuriSchool {
     }
 
 
-    /// ---------------------------- EVENTS ----------------------------------------- ///
+    /// ---------------------------------------- EVENTS ----------------------------------------- ///
     /// @notice emit when a stakeholder is registered
     event StakeholderRegisteredEvent (
             string _role,address[] stakeholderAddress
@@ -184,7 +186,6 @@ contract ZuriSchool {
     event StakeholderRemovedEvent (
             address stakeholderAddress
     ); 
-
 
     /// @notice emit when role is removed
     event RemoveRole(address remover, address addr);
@@ -218,7 +219,7 @@ contract ZuriSchool {
     event VotesCountedEvent (string category,uint256 totalVotes);
 
     
-    /// ------------------------------------------ FUNCTIONS ------------------------------------------------- ///
+    /// --------------------------------------- FUNCTIONS ------------------------------------------- ///
     /// @dev helper function to compare strings
     function compareStrings(string memory _str, string memory str) private pure returns (bool) {
         return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
@@ -230,9 +231,9 @@ contract ZuriSchool {
         return compareStrings( _role,stakeholders[_address].role);
     }     
     
-    function assignRole(string memory _role,address _stakeHolder) onlyChairman public{
+    function assignRole(string memory _role,address _stakeHolder) onlyChairman onlyWhenNotPaused public{
         require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role to a non stakeholder.");
-        ///@notice assign role to stakeholder
+        /// @notice assign role to stakeholder
         stakeholders[_stakeHolder].role = _role;
         /// @notice emit event of new teacher
         emit AssignedRole(msg.sender, _stakeHolder);
@@ -247,9 +248,27 @@ contract ZuriSchool {
         );
         
         for (uint i = 0; i < _address.length; i++) {
+<<<<<<< HEAD
                 //mint 5 tokens to students,10 tokens to teachers and 20 to directors
                 zstoken.mint(_address[i],_amountOftoken*decimals);
                 stakeholders[_address[i]] = Stakeholder(_role,true, false, 0,1 );     
+=======
+            /// @notice avoid duplication
+            if(compareStrings(_role,"student")){
+                // @notice mint 5 tokens to students
+                zstoken.mint(_address[i],5*decimals);
+                stakeholders[_address[i]] = Stakeholder("student",true, false, 0,1 );    
+            } else if(compareStrings(_role,"teacher")) {
+                    /// @notice mint 10 tokens to teachers
+                    zstoken.mint(_address[i],10*decimals);
+                    stakeholders[_address[i]] = Stakeholder("teacher",true, false, 0,2 );
+            }
+            else if(compareStrings(_role,"director")) {
+                    /// @notice mint 20 tokens to directors
+                    zstoken.mint(_address[i],20*decimals);
+                    stakeholders[_address[i]] = Stakeholder("director",true, false, 0,3 );
+            }
+>>>>>>> 83b747c09d2985db3e72c14561df151a46a2bf5f
         }
         
         /// @notice emit stakeholder registered event
@@ -258,6 +277,7 @@ contract ZuriSchool {
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess onlyWhenNotPaused {
+
         /// @notice check if the position already exists
         require(Category[_category] != 0,"Category does not exist...");
         
@@ -277,7 +297,7 @@ contract ZuriSchool {
         emit CandidateRegisteredEvent(candidatesCount);
     }
 
-    ///@notice add categories of offices for election
+    /// @notice add categories of offices for election
     function addCategories(string memory _category) onlyAccess onlyWhenNotPaused public returns(string memory ){
         
         /// @notice add to the categories array
@@ -289,9 +309,14 @@ contract ZuriSchool {
         return _category;
     }
 
-    ///@notice show all categories of offices available for election
+    /// @notice show all categories of offices available for election
     function showCategories() onlyWhenNotPaused public view returns(string[] memory){
         return categories;
+    }
+
+    /// @notice show all election queue
+    function showQueue() onlyWhenNotPaused public view returns(Election[] memory){
+        return electionQueue;
     }
 
     /// @notice setup election
@@ -321,11 +346,11 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         for(uint256 i = 0;i<electionQueue.length;i++){
             if(compareStrings(electionQueue[i].category,_category)){
-                //add election category to active elections
+                /// @notice add election category to active elections
                 activeElections[_category]=electionQueue[i];
-                //start voting session
+                /// @notice start voting session
                 activeElections[_category].VotingStarted=true;
-                //update the activeElectionArrays
+                /// @notice update the activeElectionArrays
                 activeElectionArrays.push(electionQueue[i]);
             }
         }
@@ -375,7 +400,6 @@ contract ZuriSchool {
         return (_category, _candidateID);
     }
 
-    
     /// @notice retrieve winning vote count in a specific category
     function getWinningCandidate(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (Candidate memory,uint256) {
@@ -413,7 +437,6 @@ contract ZuriSchool {
                     winningCandidateIndex += 1;
                 }
             }
-
         } 
         /// @notice update Election status
         activeElections[_position].VotesCounted=true;
@@ -429,7 +452,7 @@ contract ZuriSchool {
     }
 
     /// @notice ensure that only the chairman, teacher or director can make the election results public
-    function makeResultPublic(string memory _category) public onlyGranted returns(Candidate memory,string memory) {
+    function makeResultPublic(string memory _category) public onlyAccess onlyWhenNotPaused returns(Candidate memory,string memory) {
 
         /// @notice require that the category voting session is over before compiling votes
         require(activeElections[_category].VotesCounted==true,"This session is still active,voting has not yet been counted");

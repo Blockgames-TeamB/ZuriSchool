@@ -245,7 +245,7 @@ contract ZuriSchool {
         for (uint i = 0; i < _address.length; i++) {
                 //mint 5 tokens to students,10 tokens to teachers and 20 to directors
                 zstoken.mint(_address[i],_amountOftoken*decimals);
-                stakeholders[_address[i]] = Stakeholder(_role,true, false, 0,1 );     
+                stakeholders[_address[i]] = Stakeholder(_role,true, false, 0,votingPower );     
         }
         
         /// @notice emit stakeholder registered event

@@ -3,7 +3,11 @@ pragma solidity ^0.8.10;
 import "./ZuriSchoolToken.sol";
 
 
-/// @notice flow process
+///students = ["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB"]
+///teachers = ["0x617F2E2fD72FD9D5503197092aC168c91465E7f2","0x17F6AD8Ef982297579C203069C1DbfFE4348c372","0x5c6B0f7Bf3E7ce046039Bd8FABdfD3f9F5021678"]
+///director = ["0x03C6FcED478cBbC9a4FAB34eF9f40767739D1Ff7","0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C","0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC"]
+
+/// @dev flow process
 /// @dev -1- register address as stakeholders
 /// @dev -2- add category
 /// @dev -3- register candidates
@@ -17,23 +21,38 @@ import "./ZuriSchoolToken.sol";
 
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
+
+// interface ZuriSchoolToken {
+//     /// @dev balanceOf returns the number of token owned by the given address
+//     /// @param owner - address to fetch number of token for
+//     /// @return Returns the number of tokens owned
+//     function balanceOf(address owner) external view returns (uint256);
+// }
+
+
 contract ZuriSchool {
 
     constructor(address _tokenAddr) {
         zstoken = ZuriSchoolToken(_tokenAddr);
+        
+        /// @notice mint zst to contract owner
         zstoken.mint(msg.sender, 10000 * decimals);
+        
         /// @notice add chairman is the deployer of the contract
         chairman = msg.sender;
-        //add chairman to stakeholder
-        stakeholders[msg.sender] = Stakeholder(true, false, 0 );
+        
+        /// @notice add chairman as a stakeholder
+        stakeholders[msg.sender] = Stakeholder("chairman",true, false, 0,4 );
     }
 
-    /// --------------------------- STRUCT ------------------------------------ ///
+   /// ---------------------------------------- STRUCT ------------------------------------------ ///
     /// @notice structure for stakeholders
     struct Stakeholder {
+        string role;
         bool isRegistered;
         bool hasVoted;  
-        uint votedCandidateId;   
+        uint votedCandidateId;
+        uint256 votingPower;   
     }
 
     /// @notice structure for candidates
@@ -52,32 +71,21 @@ contract ZuriSchool {
         bool VotingEnded;
         bool VotesCounted;
         bool isResultPublic;
+        uint256 totalVotesCasted;
     }
 
-    /// -------------------------- VARIABLES ----------------------------------- ///
+    /// ---------------------------------------- VARIABLES ------------------------------------- ///
     /// @notice state variable for tokens
     ZuriSchoolToken public zstoken;
 
-    /// @notice declare state variable teacher
-    address[] public teachers;
-
     /// @notice declare state variable chairman
     address public chairman;
-
-    /// @notice declare state variable director
-    address[] public directors;
-    
-    /// @notice declare array of state variable student
-    address[] public students;
 
     /// @notice declare state variable candidatesCount
     uint public candidatesCount = 0;
 
     /// @notice id of winner
     uint private winningCandidateId;
-
-    /// @notice array of stakeholders
-    address[] public registeredStakeholders;
 
     /// @notice array for categories
     string[] public categories;
@@ -98,21 +106,9 @@ contract ZuriSchool {
     Election[] public activeElectionArrays;
 
 
-    /// ---------------------- MAPPING ------------------------------------ ///
+    /// ------------------------------------- MAPPING ------------------------------------------ ///
     /// @notice mapping for list of stakeholders addresses
     mapping(address => Stakeholder) public stakeholders;
-
-    /// @notice mapping for list of stakeholders current status
-    // mapping(address => bool) public isStakeholders;
-
-    /// @notice mapping for list of directors
-    mapping(address => bool) public director;
-
-    /// @notice mapping for list of teachers
-    mapping(address => bool) public teacher;
-    
-     /// @notice mapping for list of student
-    mapping(address => bool) public student;
 
     /// @notice array for candidates
     mapping(uint => Candidate) public candidates;
@@ -136,7 +132,7 @@ contract ZuriSchool {
     mapping(string=>Election) public activeElections;
   
 
-    /// ----------------------- MODIFIER -------------------------------------- ///
+    /// ------------------------------------- MODIFIER ------------------------------------------- ///
     /// @notice modifier to check that only the registered stakeholders can call a function
     modifier onlyRegisteredStakeholder() {
 
@@ -159,29 +155,11 @@ contract ZuriSchool {
     modifier onlyAccess() {
 
         /// @notice check that sender is the chairman
-        require(msg.sender == chairman || teacher[msg.sender] == true, 
+        require(msg.sender == chairman || compareStrings(stakeholders[msg.sender].role,"teacher"), 
         "Access granted to only the chairman or teacher");
         _;
     }
-
-    /// @notice modifier to check that only the chairman, teacher or director can call a function
-    modifier onlyGranted() {
-
-        /// @notice check that sender is the chairman
-        require ((msg.sender == chairman) || (teacher[msg.sender]==true) || (director[msg.sender] ==true), 
-        "Access granted to only the chairman, teacher or director");
-        _;
-    }
-    
-    /// @notice modifier to check that function can only be called when voting has started
-    modifier onlyDuringVotingSession(string memory _category) {
-
-        /// @notice require that this process only occurs during the voting period
-        require(activeElections[_category].VotingStarted ==true, 
-           "You can only do this during the voting session");
-       _;
-    }
-    
+       
     /// @notice modifier to check that function can only be called after the votes have been counted
     modifier onlyAfterVotesCounted(string memory _category) {
 
@@ -198,7 +176,7 @@ contract ZuriSchool {
     }
 
 
-    /// ---------------------------- EVENTS ----------------------------------------- ///
+    /// ---------------------------------------- EVENTS ----------------------------------------- ///
     /// @notice emit when a stakeholder is registered
     event StakeholderRegisteredEvent (
             string _role,address[] stakeholderAddress
@@ -234,54 +212,33 @@ contract ZuriSchool {
     /// @notice emit when stakeholder has voted
     event VotedEvent (
         address stakeholder,
-         string category
+        uint candidateId
     );
     
     /// @notice emit when votes have been counted
     event VotesCountedEvent (string category,uint256 totalVotes);
 
     
-    /// ------------------------------------------ FUNCTIONS ------------------------------------------------- ///
+    /// --------------------------------------- FUNCTIONS ------------------------------------------- ///
     /// @dev helper function to compare strings
     function compareStrings(string memory _str, string memory str) private pure returns (bool) {
         return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
     }
 
-    /// @notice check stakeholder role
+    /// @notice check if address is a teacher
     function checkRole(string memory _role,address _address) onlyWhenNotPaused public view 
         returns (bool) {
-        bool result = ( _address == chairman);
-       
-        return  result;
+        return compareStrings( _role,stakeholders[_address].role);
     }     
- 
     
-    /// @notice function to assign role to stakeholder
-    function assignRole(string memory _role,address _stakeHolder) onlyChairman public{
+    function assignRole(string memory _role,address _stakeHolder) onlyChairman onlyWhenNotPaused public{
         require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role to a non stakeholder.");
-        if(compareStrings(_role,"teacher")){
-            teacher[_stakeHolder] = true;
-        }else if(compareStrings(_role,"director")){
-            director[_stakeHolder] = true;
-        }
+        /// @notice assign role to stakeholder
+        stakeholders[_stakeHolder].role = _role;
         /// @notice emit event of new teacher
         emit AssignedRole(msg.sender, _stakeHolder);
     }    
 
-    /// @notice function to remove role from stakeholder
-    function removeRole(string memory _role ,address _addr) public onlyChairman{
-        if(compareStrings(_role,"teacher")){
-            teacher[_addr] = false;
-        }else if(compareStrings(_role,"director")){
-            director[_addr] = false;
-        }else if(compareStrings(_role,"stakeholder")){
-            stakeholders[_addr].isRegistered  = false;
-        }
-        /// @notice emit event of new teacher
-        emit RemoveRole(msg.sender,_addr);
-    }
-
-    /// @notice function to register stakeholder
     function uploadStakeHolder(string memory _role,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
         
         /// @notice loop through the list of students and upload
@@ -291,52 +248,30 @@ contract ZuriSchool {
         );
         
         for (uint i = 0; i < _address.length; i++) {
-            
-            /// @notice check if stakeholder is a student
+            /// @notice avoid duplication
             if(compareStrings(_role,"student")){
-                /// @notice avoid duplication
-                 if(student[_address[i]] !=true){ 
-                        //mint 5 tokens to students
-                        zstoken.mint(_address[i],5*decimals);
-                        students.push(_address[i]);
-                        student[_address[i]] =true;
-                        stakeholders[_address[i]] = Stakeholder(true, false, 0 );
-                    }
-
-            /// @notice check if stakeholder is a teacher
+                // @notice mint 5 tokens to students
+                zstoken.mint(_address[i],5*decimals);
+                stakeholders[_address[i]] = Stakeholder("student",true, false, 0,1 );    
             } else if(compareStrings(_role,"teacher")) {
-                /// @notice avoid duplication
-                if(teacher[_address[i]] != true){
-                    //mint 10 tokens to teachers
+                    /// @notice mint 10 tokens to teachers
                     zstoken.mint(_address[i],10*decimals);
-                    teacher[_address[i]] = true;
-                    stakeholders[_address[i]] = Stakeholder(true, false, 0 );
-                    teachers.push(_address[i]);
-                }
-
-            /// @notice check if stakeholder is a director
-            }else if(compareStrings(_role,"director")) {
-                 /// @notice avoid duplication
-                if(director[_address[i]] != true){
-                    //mint 20 tokens to directors
+                    stakeholders[_address[i]] = Stakeholder("teacher",true, false, 0,2 );
+            }
+            else if(compareStrings(_role,"director")) {
+                    /// @notice mint 20 tokens to directors
                     zstoken.mint(_address[i],20*decimals);
-                    director[_address[i]] = true;
-                    stakeholders[_address[i]] = Stakeholder(true, false, 0 );
-                }
+                    stakeholders[_address[i]] = Stakeholder("director",true, false, 0,3 );
             }
         }
         
         /// @notice emit stakeholder registered event
         emit StakeholderRegisteredEvent(_role,_address);
     }
-    
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess onlyWhenNotPaused {
 
-        /// @notice check that candidate not already active for an election
-        require(activeCandidate[candidatesCount]==false,"Candidate is already active for an election");
-        
         /// @notice check if the position already exists
         require(Category[_category] != 0,"Category does not exist...");
         
@@ -356,7 +291,7 @@ contract ZuriSchool {
         emit CandidateRegisteredEvent(candidatesCount);
     }
 
-    ///@notice add categories of offices for election
+    /// @notice add categories of offices for election
     function addCategories(string memory _category) onlyAccess onlyWhenNotPaused public returns(string memory ){
         
         /// @notice add to the categories array
@@ -368,15 +303,16 @@ contract ZuriSchool {
         return _category;
     }
 
-    ///@notice show all categories of offices available for election
+    /// @notice show all categories of offices available for election
     function showCategories() onlyWhenNotPaused public view returns(string[] memory){
         return categories;
     }
 
-  ///@notice show all election queue
+    /// @notice show all election queue
     function showQueue() onlyWhenNotPaused public view returns(Election[] memory){
         return electionQueue;
     }
+
     /// @notice setup election
     /// @dev takes in category and an array of candidates
     function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyAccess onlyWhenNotPaused returns(bool){
@@ -388,7 +324,8 @@ contract ZuriSchool {
         false,
         false,
         false,
-        false
+        false,
+        0
     ));
         return true;
     }
@@ -403,11 +340,11 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         for(uint256 i = 0;i<electionQueue.length;i++){
             if(compareStrings(electionQueue[i].category,_category)){
-                //add election category to active elections
+                /// @notice add election category to active elections
                 activeElections[_category]=electionQueue[i];
-                //start voting session
+                /// @notice start voting session
                 activeElections[_category].VotingStarted=true;
-                //update the activeElectionArrays
+                /// @notice update the activeElectionArrays
                 activeElectionArrays.push(electionQueue[i]);
             }
         }
@@ -419,7 +356,6 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         
-       
         emit VotingEndedEvent(_category,true);
         emit VotingProcessChangeEvent(
             activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
@@ -439,43 +375,29 @@ contract ZuriSchool {
         require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
     
         /// @notice check that a candidate is valid for a vote in a category
-        require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
+        // require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
         
         /// @notice check that votes are not duplicated
         require(votedForCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
         stakeholders[msg.sender].hasVoted = true;
 
         //require that balance of voter is greater than zero.. 1 token per votes
-        require(zstoken.balanceOf(msg.sender) >1*10**18,"YouR balance is currently not sufficient to vote. Not a stakeholder");
-        uint256 votingPower=0;
-        
-        //set voting power
-        if(teacher[msg.sender]== true && zstoken.balanceOf(msg.sender) >=10*decimals ){
-            votingPower = 2;
-        }else if(director[msg.sender]== true && zstoken.balanceOf(msg.sender) >=20*decimals){
-            votingPower = 3;
-        }
-        else if(msg.sender== chairman){
-
-            votingPower = 4;
-        }else if(student[msg.sender]== true && zstoken.balanceOf(msg.sender) >=5*decimals){
-            votingPower = 1;
-        }
-        
+        require(zstoken.balanceOf(msg.sender) >1*decimals,"YouR balance is currently not sufficient to vote. Not a stakeholder");
+      
         /// @notice ensuring there are no duplicate votes recorded for a candidates category.
-        uint256 votes = votesForCategory[_candidateID][Category[_category]]+=votingPower;
+        uint256 votes = votesForCategory[_candidateID][Category[_category]]+=stakeholders[msg.sender].votingPower;
         candidates[_candidateID].voteCount = votes;
         votedForCategory[Category[_category]][msg.sender]=true;
         
-        emit VotedEvent(msg.sender, _category);
-    
+        emit VotedEvent(msg.sender, _candidateID);
+
         return (_category, _candidateID);
     }
 
     /// @notice retrieve winning vote count in a specific category
     function getWinningCandidate(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
-       returns (Candidate memory) {
-       return categoryWinner[_category];
+       returns (Candidate memory,uint256) {
+       return (categoryWinner[_category],activeElections[_category].totalVotesCasted);
     }   
     
     /// @notice fetch a specific election
@@ -509,9 +431,7 @@ contract ZuriSchool {
                     winningCandidateIndex += 1;
                 }
             }
-
         } 
-
         /// @notice update Election status
         activeElections[_position].VotesCounted=true;
         
@@ -526,12 +446,11 @@ contract ZuriSchool {
     }
 
     /// @notice ensure that only the chairman, teacher or director can make the election results public
-    function makeResultPublic(string memory _category) public onlyGranted returns(Candidate memory,string memory) {
+    function makeResultPublic(string memory _category) public onlyAccess onlyWhenNotPaused returns(Candidate memory,string memory) {
 
         /// @notice require that the category voting session is over before compiling votes
-        require(activeElections[_category].VotesCounted=true,"This session is still active,voting has not yet been counted");
+        require(activeElections[_category].VotesCounted==true,"This session is still active,voting has not yet been counted");
         activeElections[_category].isResultPublic=true;
         return (categoryWinner[_category],_category);
         } 
     }
-    

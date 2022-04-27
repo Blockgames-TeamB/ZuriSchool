@@ -1,6 +1,10 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('solidity-coverage');
+require("@nomiclabs/hardhat-ethers");
+require("hardhat-deploy");
+// require("HardhatUserConfig")
+
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -41,9 +45,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY,
   },
-  plugins:["solidity-coverage"]
-};
-
-
-
-
+  plugins:["solidity-coverage"],
+  namedAccounts: {
+    deployer: {
+      default: 0, // here this will by default take the first account as deployer
+    },
+}
+ }

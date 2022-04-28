@@ -501,7 +501,7 @@ contract ZuriSchool {
     function makeResultPublic(string memory _category) public onlyAccess onlyWhenNotPaused returns(Candidate memory,string memory) {
 
         /** @notice require that the category voting session is over before compiling votes */
-        require(activeElections[_category].VotesCounted == true, "This session is still active, votes have not been counted");
+        require(activeElections[_category].VotesCounted == true, "This session is still active, voting has not yet been counted");
         activeElections[_category].isResultPublic = true;
         return (categoryWinner[_category],_category);
         } 

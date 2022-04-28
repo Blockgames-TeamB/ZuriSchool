@@ -198,11 +198,6 @@ contract ZuriSchool {
         uint candidateId
     );
     
-    /// @notice emit when voting process status changes
-    event VotingProcessChangeEvent (
-       bool previousVotingStatus,bool currentVotingStatus
-    );
-
     /// @notice emit when voting process has started
     event VotingStartedEvent (string category,bool status);
     
@@ -239,7 +234,7 @@ contract ZuriSchool {
         emit AssignedRole(msg.sender, _stakeHolder);
     }    
 
-    function uploadStakeHolder(string memory _role,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
+    function uploadStakeHolder(string memory _role,uint256 _amountOftoken,uint256 votingPower,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
         
         /// @notice loop through the list of students and upload
         require(
@@ -248,21 +243,9 @@ contract ZuriSchool {
         );
         
         for (uint i = 0; i < _address.length; i++) {
-            /// @notice avoid duplication
-            if(compareStrings(_role,"student")){
-                // @notice mint 5 tokens to students
-                zstoken.mint(_address[i],5*decimals);
-                stakeholders[_address[i]] = Stakeholder("student",true, false, 0,1 );    
-            } else if(compareStrings(_role,"teacher")) {
-                    /// @notice mint 10 tokens to teachers
-                    zstoken.mint(_address[i],10*decimals);
-                    stakeholders[_address[i]] = Stakeholder("teacher",true, false, 0,2 );
-            }
-            else if(compareStrings(_role,"director")) {
-                    /// @notice mint 20 tokens to directors
-                    zstoken.mint(_address[i],20*decimals);
-                    stakeholders[_address[i]] = Stakeholder("director",true, false, 0,3 );
-            }
+                //mint 5 tokens to students,10 tokens to teachers and 20 to directors
+                zstoken.mint(_address[i],_amountOftoken*decimals);
+                stakeholders[_address[i]] = Stakeholder(_role,true, false, 0,votingPower );     
         }
         
         /// @notice emit stakeholder registered event
@@ -357,9 +340,7 @@ contract ZuriSchool {
         activeElections[_category].VotingEnded = true;
         
         emit VotingEndedEvent(_category,true);
-        emit VotingProcessChangeEvent(
-            activeElections[_category].VotingStarted, activeElections[_category].VotingEnded);        
-    }
+     }
      
     /// @notice function for voting process
     /// @return category and candidate voted for

@@ -244,8 +244,10 @@ https://rinkeby.etherscan.io/address/0x3Ec541523046375f0DAf5334Cf656eaFDa7DAA71#
 This Project was created by the members of TeamB during the Blockgames Internship.
 
 <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=17IRdkKnqBofdTu4x9EAPzh9n5eILyVL1" alt="teamB"/>
+  <img src="https://drive.google.com/uc?export=view&id=17igBfE_fikN2_NGJ0am0IaK8V1IW3Q-8" alt="teamB"/>
 </p>
+
+
 
 #
 > ## Contributing to the project

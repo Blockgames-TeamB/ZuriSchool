@@ -29,7 +29,6 @@ import "./ZuriSchoolToken.sol";
 //     function balanceOf(address owner) external view returns (uint256);
 // }
 
-
 contract ZuriSchool {
 
     constructor(address _tokenAddr) {
@@ -45,7 +44,8 @@ contract ZuriSchool {
         stakeholders[msg.sender] = Stakeholder("chairman",true, false, 0,4 );
     }
 
-   /// ---------------------------------------- STRUCT ------------------------------------------ ///
+
+    /// ---------------------------------------- STRUCT ------------------------------------------ ///
     /// @notice structure for stakeholders
     struct Stakeholder {
         string role;
@@ -73,6 +73,7 @@ contract ZuriSchool {
         bool isResultPublic;
         uint256 totalVotesCasted;
     }
+
 
     /// ---------------------------------------- VARIABLES ------------------------------------- ///
     /// @notice state variable for tokens
@@ -231,6 +232,8 @@ contract ZuriSchool {
         return compareStrings( _role,stakeholders[_address].role);
     }     
     
+    /// @notice assign roles to stakeholders
+    /// @dev function is limited to chairman only
     function assignRole(string memory _role,address _stakeHolder) onlyChairman onlyWhenNotPaused public{
         require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role to a non stakeholder.");
         /// @notice assign role to stakeholder
@@ -239,6 +242,8 @@ contract ZuriSchool {
         emit AssignedRole(msg.sender, _stakeHolder);
     }    
 
+    /// @notice upload csv file of stakeholders
+    /// @dev function is limited to chairman and teacher only
     function uploadStakeHolder(string memory _role,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
         
         /// @notice loop through the list of students and upload
@@ -247,18 +252,27 @@ contract ZuriSchool {
             "Upload array of addresses"
         );
         
+        /// @notice avoid duplication
         for (uint i = 0; i < _address.length; i++) {
-            /// @notice avoid duplication
+            
+            /// @notice check if role is student
             if(compareStrings(_role,"student")){
-                // @notice mint 5 tokens to students
+
+                /// @notice mint 5 tokens to students
                 zstoken.mint(_address[i],5*decimals);
-                stakeholders[_address[i]] = Stakeholder("student",true, false, 0,1 );    
+                stakeholders[_address[i]] = Stakeholder("student",true, false, 0,1 );
+
+            /// @notice check if role is teacher    
             } else if(compareStrings(_role,"teacher")) {
+
                     /// @notice mint 10 tokens to teachers
                     zstoken.mint(_address[i],10*decimals);
                     stakeholders[_address[i]] = Stakeholder("teacher",true, false, 0,2 );
             }
+
+            /// @notice check if role is director
             else if(compareStrings(_role,"director")) {
+
                     /// @notice mint 20 tokens to directors
                     zstoken.mint(_address[i],20*decimals);
                     stakeholders[_address[i]] = Stakeholder("director",true, false, 0,3 );
@@ -268,6 +282,7 @@ contract ZuriSchool {
         /// @notice emit stakeholder registered event
         emit StakeholderRegisteredEvent(_role,_address);
     }
+    
     /// @notice store candidates information
     function registerCandidate(string memory candidateName, string memory _category) 
         public onlyAccess onlyWhenNotPaused {
@@ -381,14 +396,16 @@ contract ZuriSchool {
         require(votedForCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
         stakeholders[msg.sender].hasVoted = true;
 
-        //require that balance of voter is greater than zero.. 1 token per votes
+        /// @notice check that balance of voter is greater than zero.. 1 token per votes
         require(zstoken.balanceOf(msg.sender) >1*decimals,"YouR balance is currently not sufficient to vote. Not a stakeholder");
       
-        /// @notice ensuring there are no duplicate votes recorded for a candidates category.
+        /// @notice ensure that there are no duplicate votes recorded for a candidates category.
         uint256 votes = votesForCategory[_candidateID][Category[_category]]+=stakeholders[msg.sender].votingPower;
         candidates[_candidateID].voteCount = votes;
         votedForCategory[Category[_category]][msg.sender]=true;
         
+        /// @notice emit event when a candidate is voted for
+        /// @dev emit person that voted and the candidate they voted for
         emit VotedEvent(msg.sender, _candidateID);
 
         return (_category, _candidateID);
@@ -432,6 +449,7 @@ contract ZuriSchool {
                 }
             }
         } 
+        
         /// @notice update Election status
         activeElections[_position].VotesCounted=true;
         

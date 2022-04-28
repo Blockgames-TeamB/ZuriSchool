@@ -700,7 +700,7 @@ describe("Make Election Result Public ...",function(){
         const [owner] = await ethers.getSigners();
         console.log("\t","Attempting to  Make Election Result Public when session is still active");
         endVotingSession = await votingContract.connect(owner).endVotingSession("counsellor");
-        await expect(votingContract.connect(owner).makeResultPublic("counsellor")).to.be.revertedWith("This session is still active,voting has not yet been counted");
+        await expect(votingContract.connect(owner).makeResultPublic("counsellor")).to.be.revertedWith("This session is still active, voting has not yet been counted");
         console.log('\t',"Passed ....")
     });
     

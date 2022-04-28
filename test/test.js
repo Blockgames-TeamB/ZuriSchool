@@ -93,7 +93,7 @@ describe("Check Role of a stakeholder...",function(){
     it("Should be able to check role if role is student",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to Check the role is a student.");
-        uploadStakeHolder = await votingContract.connect(owner).uploadStakeHolder("student",5,[fourthAddress.address])
+        uploadStakeHolder = await votingContract.connect(owner).uploadStakeHolder("student",5,1,[fourthAddress.address])
         paused = await votingContract.connect(owner).checkRole("student",fourthAddress.address);
         const tx = await paused;
         expect(tx).to.be.equal(true);
@@ -112,7 +112,7 @@ describe("Assign Role of a stakeholders...",function(){
         const [owner,secondAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to assign role as a chairman....");
         //add address as a stakeholder
-        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,[secondAddress.address]);
+        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,2,[secondAddress.address]);
         assignRole =await votingContract.connect(owner).assignRole("teacher",secondAddress.address);
         const tx = await assignRole.wait();
         expect(tx.status).to.equal(1);
@@ -128,7 +128,7 @@ describe("Assign Role of a stakeholders...",function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to assign role as a chairman....");
         //add address as a stakeholder
-        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",20,[seventhAddress.address]);
+        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",20,3,[seventhAddress.address]);
         assignRole =await votingContract.connect(owner).assignRole("director",seventhAddress.address);
         const tx = await assignRole.wait();
         expect(tx.status).to.equal(1);
@@ -142,13 +142,13 @@ describe("Uploading stakeholders...",function(){
     it("Should not be able to upload stakeholder if caller is not the chairman",async function(){
         const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to upload stakeholders when caller is not the chairman.");
-        await expect(votingContract.connect(thirdAddress).uploadStakeHolder("teacher",10,[secondAddress.address])).to.be.revertedWith("Access granted to only the chairman or teacher");
+        await expect(votingContract.connect(thirdAddress).uploadStakeHolder("teacher",10,2,[secondAddress.address])).to.be.revertedWith("Access granted to only the chairman or teacher");
         console.log('\t',"Passed ...."); 
     });
     it("Should be able to upload stakeholder if caller is the chairman",async function(){
         const [owner,secondAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to upload stakeholders when caller is the chairman.");
-        uploadStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,[secondAddress.address]);
+        uploadStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,2,[secondAddress.address]);
         const tx = await uploadStakeholder.wait();
         expect(tx.status).to.be.equal(1);
         console.log('\t',"Passed ...."); 
@@ -157,7 +157,7 @@ describe("Uploading stakeholders...",function(){
     it("Should not be able to upload stakeholder if caller is not a teacher ",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to upload stakeholders when caller is not the teacher.");
-        await expect(votingContract.connect(thirdAddress).uploadStakeHolder("teacher",10,[fourthAddress.address])).to.be.revertedWith("Access granted to only the chairman or teacher");
+        await expect(votingContract.connect(thirdAddress).uploadStakeHolder("teacher",10,2,[fourthAddress.address])).to.be.revertedWith("Access granted to only the chairman or teacher");
         console.log('\t',"Passed ....");
     });
     it("Should be able to upload stakeholder if caller is a teacher ",async function(){
@@ -165,8 +165,8 @@ describe("Uploading stakeholders...",function(){
         const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to upload stakeholders when caller is the teacher.");
         //upload teacher as stakeholder
-        uploadStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,[secondAddress.address]);
-        uploadStakeHolderByNewTeacher =await votingContract.connect(secondAddress).uploadStakeHolder("teacher",10,[thirdAddress.address]);
+        uploadStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,2,[secondAddress.address]);
+        uploadStakeHolderByNewTeacher =await votingContract.connect(secondAddress).uploadStakeHolder("teacher",10,2,[thirdAddress.address]);
         const tx = await uploadStakeHolderByNewTeacher.wait();
         expect(tx.status).to.be.equal(1);
         console.log('\t',"Passed ....");
@@ -175,7 +175,7 @@ describe("Uploading stakeholders...",function(){
         const [owner,secondAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to upload stakeholders when there are no stakeholders.");
         //upload teacher as stakeholder
-        await expect(votingContract.connect(owner).uploadStakeHolder("teacher",10,[])).to.be.revertedWith("Upload array of addresses");
+        await expect(votingContract.connect(owner).uploadStakeHolder("teacher",10,2,[])).to.be.revertedWith("Upload array of addresses");
         console.log('\t',"Passed ....");
     });
     it("Should not be able to upload stakeholders when contract is paused",async function(){
@@ -183,14 +183,14 @@ describe("Uploading stakeholders...",function(){
         console.log('\t',"Attempting to upload stakeholders when contract is paused.");
         //pause the contract
         const paused = await votingContract.connect(owner).setPaused(true);
-       await expect(votingContract.connect(owner).uploadStakeHolder("teacher",10,["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"])).to.be.revertedWith("Contract is currently paused");
+       await expect(votingContract.connect(owner).uploadStakeHolder("teacher",10,2,["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"])).to.be.revertedWith("Contract is currently paused");
        console.log('\t',"Passed ....")
        const unpaused = await votingContract.connect(owner).setPaused(false);
     });
     it("Should be able to upload stakeholders when contract is not paused",async function(){
         const [owner] = await ethers.getSigners();
         console.log('\t',"Attempting to upload stakeholders when contract is not paused.");
-        paused = await votingContract.connect(owner).uploadStakeHolder("teacher",10,["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"]);
+        paused = await votingContract.connect(owner).uploadStakeHolder("teacher",10,2,["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"]);
         const tx = await paused.wait();
         expect(tx.status).to.be.equal(1);
         console.log('\t',"Passed ....");     
@@ -670,7 +670,7 @@ describe("Make Election Result Public ...",function(){
     it("Should not be able to Make Election Result Public if caller is not the chairman",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress] = await ethers.getSigners();
         console.log("\t","Attempting to  Make Election Result Public if caller is not the chairman");
-        await expect(votingContract.connect(fifthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman, teacher or director");
+        await expect(votingContract.connect(fifthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman or teacher");
         console.log('\t',"Passed ....")
     });
     it("Should be able to Make Election Result Public if caller is the chairman",async function(){
@@ -681,26 +681,10 @@ describe("Make Election Result Public ...",function(){
         expect(tx.status).to.equal(1);
         console.log('\t',"Passed ....")
     });
-    it("Should not be able to Make Election Result Public if caller is not the director",async function(){
-        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress] = await ethers.getSigners();
-        uploadStakeHolder = await votingContract.connect(owner).uploadStakeHolder("director",20,[sixthAddress.address]);
-        console.log("\t","Attempting to  Make Election Result Public if caller is not the director");
-        await expect(votingContract.connect(fifthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman, teacher or director");
-        console.log('\t',"Passed ....")
-    
-    });
-    it("Should be able to Make Election Result Public if caller is the director",async function(){
-        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress] = await ethers.getSigners();
-        console.log("\t","Attempting to  Make Election Result Public if caller is the director");
-        makeresultpublic = await votingContract.connect(sixthAddress).makeResultPublic("senate");
-        const tx = await makeresultpublic.wait();
-        expect(tx.status).to.equal(1);
-        console.log('\t',"Passed ....")
-    });
     it("Should not be able to Make Election Result Public if caller is not the teacher",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress] = await ethers.getSigners();
          console.log("\t","Attempting to  Make Election Result Public if caller is not the teacher");
-        await expect(votingContract.connect(fourthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman, teacher or director");
+        await expect(votingContract.connect(fourthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman or teacher");
         console.log('\t',"Passed ....")
     
     });
@@ -720,4 +704,24 @@ describe("Make Election Result Public ...",function(){
         console.log('\t',"Passed ....")
     });
     
+})
+///@notice test for showing queue
+describe("Show election Queue",function(){
+    it("Show not be able to show queue when contract is paused", async function(){
+        //get signers
+        const [owner] = await ethers.getSigners();
+        console.log('\t',"Attempting to pause the contract...");
+        paused = await votingContract.connect(owner).setPaused(true);
+        await expect(votingContract.connect(owner).showQueue()).to.be.revertedWith("Contract is currently paused");
+        unpaused =await votingContract.connect(owner).setPaused(false); 
+        console.log("passed..."); 
+    });
+    it("Show be able to show queue when contract is not paused", async function(){
+        //get signers
+        const [owner] = await ethers.getSigners();
+        console.log('\t',"Attempting to show queue...");
+        showQueue = await votingContract.connect(owner).showQueue();
+        expect(showQueue.length).to.be.greaterThan(1);
+        console.log("passed..."); 
+    });
 })

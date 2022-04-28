@@ -243,9 +243,9 @@ https://rinkeby.etherscan.io/address/0x3Ec541523046375f0DAf5334Cf656eaFDa7DAA71#
 
 This Project was created by the members of TeamB during the Blockgames Internship.
 
-<!-- <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=13Gt4morUWHd7QNLk4e6Om7itygJiCOSl" alt="teamresilient"/>
-</p> -->
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=17IRdkKnqBofdTu4x9EAPzh9n5eILyVL1" alt="teamB"/>
+</p>
 
 #
 > ## Contributing to the project

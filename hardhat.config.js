@@ -1,7 +1,4 @@
 require("dotenv").config();
-const { utils } = require("ethers");
-const fs = require("fs");
-const chalk = require("chalk");
 require("@nomiclabs/hardhat-waffle");
 require("@tenderly/hardhat-tenderly");
 require("hardhat-deploy");
@@ -10,12 +7,15 @@ require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
 require('solidity-coverage');
 
+const { utils } = require("ethers");
+const fs = require("fs");
+const chalk = require("chalk");
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 const dotenv = require("dotenv");
+const defaultNetwork = "rinkeby";
 
 dotenv.config();
-const defaultNetwork = "rinkeby";
-/*
+/**
       📡 This is where you configure your deploy configuration for 🏗 scaffold-eth
       check out `packages/scripts/deploy.js` to customize your deployment
       out of the box it will auto deploy anything in the `contracts` folder and named *.sol

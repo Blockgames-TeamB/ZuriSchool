@@ -221,9 +221,10 @@ $ npx hardhat coverage --network localhost --show-stack-traces
 ```
 #
 
-<!-- <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1tMhIUrDVPcIsMxTd4FAzapB04_R93Rcc" alt="coverage tests"/>
-</p> -->
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=16zXW2QHBBinyC0adq1Cd41YUD1grjR1X" alt="coverage tests"/>
+</p>
+
 
 #
 > ## ZuriSchool Contract Address

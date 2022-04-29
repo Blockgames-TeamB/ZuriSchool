@@ -67,6 +67,7 @@ contract ZuriSchool {
         bool VotesCounted;
         bool isResultPublic;
         uint256 totalVotesCasted;
+        string[] allowedVoters;
     }
 
 
@@ -95,6 +96,12 @@ contract ZuriSchool {
     /** @notice election array */
     Election[] public activeElectionArrays;
 
+    /** @notice director's consensus array */
+    address[] private consensus;
+
+    /**@notice directors counter */
+    uint256 directorsCount;
+
 
     /// ------------------------------------- MAPPING ------------------------------------------ ///
     /** @notice mapping for list of stakeholders addresses */
@@ -120,7 +127,12 @@ contract ZuriSchool {
 
     /** @notice tracks the index of active election */
     mapping(string => uint) public activeModify;
+
+    /**@notice allowed voters (category=>user roles= true/false) */
+    mapping(string=>mapping(string=>bool)) private allowedVoters;
   
+    /** @notice director's consensus vote map */
+    mapping(address=>bool) private hasConsented;
 
     /// ------------------------------------- MODIFIER ------------------------------------------- ///
     /** @notice modifier to check that only the registered stakeholders can call a function */
@@ -130,15 +142,6 @@ contract ZuriSchool {
         require(stakeholders[msg.sender].isRegistered, 
            "You must be a registered stakeholder");
        _;
-    }
-
-    /** @notice modifier to check that only the chairman can call a function */
-    modifier onlyChairman() {
-
-        /** @notice check that sender is the chairman */
-        require(msg.sender == chairman, 
-        "Access granted to only the chairman");
-        _;
     }
     
     /** @notice modifier to check that only the chairman or teacher can call a function */
@@ -174,6 +177,15 @@ contract ZuriSchool {
         _;
     }
 
+    /** @notice modifier to check that only the chairman can call a function */
+    modifier onlyChairman() {
+
+        /** @notice check that sender is the chairman */
+        require(msg.sender == chairman, 
+        "Access granted to only the chairman");
+        _;
+    }
+
 
     /// ---------------------------------------- EVENTS ----------------------------------------- ///
     /** @notice emit when a stakeholder is registered */
@@ -203,7 +215,6 @@ contract ZuriSchool {
     
     /** @notice emit when votes have been counted */
     event VotesCountedEvent (string category,uint256 totalVotes);
-
     
     /// --------------------------------------- FUNCTIONS ------------------------------------------- ///
     /** @dev helper function to compare strings */
@@ -219,18 +230,6 @@ contract ZuriSchool {
         returns (bool) {
         return compareStrings( _role,stakeholders[_address].role);
     }     
-    
-    function changeChairman(address _stakeHolder) onlyChairman onlyWhenNotPaused public{
-        require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role of chairman to a non stakeholder.");
-        /// @notice change chairman role 
-        stakeholders[_stakeHolder].role = "chairman";
-        stakeholders[msg.sender].role = "director";
-        stakeholders[msg.sender].votingPower= 3;
-        stakeholders[_stakeHolder].votingPower= 4;
-        chairman = _stakeHolder;
-        /// @notice emit event of new chairman
-        emit ChangeChairman(msg.sender, _stakeHolder);
-    }    
 
     /**
     * @notice upload csv file of stakeholders
@@ -311,22 +310,29 @@ contract ZuriSchool {
     * @dev only chairman and teacher can setup election
     * @dev function cannot be called if contract is paused
     */
-    function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyAccess onlyWhenNotPaused returns(bool){
+    function setUpElection (string memory _category,uint256[] memory _candidateID,string[] memory _allowedVoters) public onlyAccess onlyWhenNotPaused returns(bool){
     
     uint index = activeElectionArrays.length;
     activeModify[_category] =index;
-        /** @notice create a new election and add to election queue */
-        activeElectionArrays.push(Election(
+
+        /** @notice create a new election and add to election queue */    
+        activeElectionArrays.push( Election(
             _category,
             _candidateID,
             false,
             false,
             false,
             false,
-            0
+            0,
+            _allowedVoters
         ));
-            return true;
+
+        /** @dev update allowedVoters map */
+        for(uint256 i=0;i<_allowedVoters.length;i++){
+            allowedVoters[_category][_allowedVoters[i]]=true;
         }
+        return true;
+    }
 
     /** 
     * @notice clear election queue 
@@ -346,16 +352,15 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
             require(activeModify[_category] >= 0, "no such category exist");
                 
-                /** @notice add election category to active elections */
-                uint index = activeModify[_category];
-         activeElections[_category]=activeElectionArrays[index];
+        /** @notice add election category to active elections */
+        uint index = activeModify[_category];
+        activeElections[_category]=activeElectionArrays[index];
 
          /** @notice update the activeElectionArrays */
          activeElectionArrays[index].VotingStarted=true;
 
-                /** @notice start voting session */
-                activeElections[_category].VotingStarted=true;
-                
+        /** @notice start voting session */
+        activeElections[_category].VotingStarted=true;
 
         /** @ notice emit event when voting starts */
         emit VotingStartedEvent(_category,true);
@@ -370,9 +375,15 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         
-         //update the activeElectionArrays
-                uint addressEntityIndex = activeModify[_category];
-               activeElectionArrays[addressEntityIndex].VotingEnded =true;
+         /** update the activeElectionArrays */
+        uint addressEntityIndex = activeModify[_category];
+        activeElectionArrays[addressEntityIndex].VotingEnded =true;
+        
+        /** update allowedVoters for category */
+        string[] memory _allowedVoters = activeElections[_category].allowedVoters;
+        for(uint256 i=0;i<_allowedVoters.length;i++){
+            allowedVoters[_category][_allowedVoters[i]]=false;
+        }
         /** @ notice emit event when voting ends */
         emit VotingEndedEvent(_category,true);
     }
@@ -383,14 +394,16 @@ contract ZuriSchool {
     * @dev function cannot be called if contract is paused
     * @return category and candidate voted for
     */
-    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
+     function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
+        
+        require(allowedVoters[_category][stakeholders[msg.sender].role]==true,"You are not Qualified to vote for this category ");
         
         /** @notice require that the session for voting is active */
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         
         /** @notice require that the session for voting is not yet ended */
         require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
-    
+        
         /// @notice check that a candidate is valid for a vote in a category
         // require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
         
@@ -421,9 +434,9 @@ contract ZuriSchool {
     * @dev function cannot be called if contract is paused
     */
     function getWinningCandidate(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
-       returns (Candidate memory,uint256) {
-              require(activeElections[_category].isResultPublic==true,"Result is not yet public");
-       return (categoryWinner[_category],activeElections[_category].totalVotesCasted);
+        returns (Candidate memory,uint256) {
+        require(activeElections[_category].isResultPublic==true,"Result is not yet public");
+        return (categoryWinner[_category],activeElections[_category].totalVotesCasted);
     }   
     
     /** 
@@ -467,13 +480,14 @@ contract ZuriSchool {
         } 
         
         /** @notice update Election status */
-         activeElections[_position].totalVotesCasted= totalVotes;
+        activeElections[_position].totalVotesCasted= totalVotes;
         activeElections[_position].VotesCounted=true;
-         uint addressEntityIndex = activeModify[_position];
-               activeElectionArrays[addressEntityIndex].VotesCounted =true;
+        uint addressEntityIndex = activeModify[_position];
+        activeElectionArrays[addressEntityIndex].VotesCounted =true;
+    
         /** @notice update winner for the category */
         categoryWinner[_position]=candidates[winnerId];
-        return (totalVotes, winningVoteCount, items); 
+            return (totalVotes, winningVoteCount, items); 
     }
  
     /**

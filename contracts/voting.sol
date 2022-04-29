@@ -101,7 +101,7 @@ contract ZuriSchool {
 
     /**@notice directors counter */
     uint256 directorsCount;
-
+    
 
     /// ------------------------------------- MAPPING ------------------------------------------ ///
     /** @notice mapping for list of stakeholders addresses */
@@ -128,11 +128,12 @@ contract ZuriSchool {
     /** @notice tracks the index of active election */
     mapping(string => uint) public activeModify;
 
+    /** @notice director's consensus vote map */
+    mapping(address=>bool) private hasConsented;
+
     /**@notice allowed voters (category=>user roles= true/false) */
     mapping(string=>mapping(string=>bool)) private allowedVoters;
   
-    /** @notice director's consensus vote map */
-    mapping(address=>bool) private hasConsented;
 
     /// ------------------------------------- MODIFIER ------------------------------------------- ///
     /** @notice modifier to check that only the registered stakeholders can call a function */
@@ -142,6 +143,12 @@ contract ZuriSchool {
         require(stakeholders[msg.sender].isRegistered, 
            "You must be a registered stakeholder");
        _;
+    }
+
+    /** @notice modifier to check that only the director can call a function */
+    modifier onlyDirector() {
+        require(compareStrings(stakeholders[msg.sender].role, "director"),"Only Directors have access");
+        _;
     }
     
     /** @notice modifier to check that only the chairman or teacher can call a function */
@@ -215,6 +222,10 @@ contract ZuriSchool {
     
     /** @notice emit when votes have been counted */
     event VotesCountedEvent (string category,uint256 totalVotes);
+
+    /** @notice emit event when concensus has been reached */
+    event ConcensusVote(address director,bool consent);
+
     
     /// --------------------------------------- FUNCTIONS ------------------------------------------- ///
     /** @dev helper function to compare strings */
@@ -230,6 +241,46 @@ contract ZuriSchool {
         returns (bool) {
         return compareStrings( _role,stakeholders[_address].role);
     }     
+    
+    /** 
+    * @notice director's consensus vote function
+    * @dev can be called by only the director
+    */
+    function concensusVote() public onlyDirector {
+        require(hasConsented[msg.sender]==false,"You have already consented..");
+        hasConsented[msg.sender]=true;
+        consensus.push(msg.sender);
+
+        /** @notice emit event of consesus results */
+        emit ConcensusVote(msg.sender,true);
+    }
+    
+    /** 
+    * @notice function to change directors
+    * @dev can be called by only the directors
+    * @dev function cannot be called when contract is paused
+    */
+    function changeChairman(address _stakeHolder) onlyDirector onlyWhenNotPaused public{
+        require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role of chairman to a non stakeholder.");
+        uint256 consensusCheckpoint = 75*directorsCount;
+        require(consensus.length*100 > consensusCheckpoint,"Requires Greater than 75% consent of Directors to approve!");
+        
+        /** @notice change chairman role */
+        stakeholders[_stakeHolder].role = "chairman";
+        stakeholders[chairman].role = "director";
+        stakeholders[chairman].votingPower= 3;
+        stakeholders[_stakeHolder].votingPower= 4;
+        chairman = _stakeHolder;
+        address[] memory _consensus = consensus;
+        for(uint256 i;i<_consensus.length;i++){
+            hasConsented[_consensus[i]]=false;
+        }
+        
+        delete consensus;
+
+        /** @notice emit event of new chairman */
+        emit ChangeChairman(msg.sender, _stakeHolder);
+    } 
 
     /**
     * @notice upload csv file of stakeholders
@@ -326,8 +377,7 @@ contract ZuriSchool {
             0,
             _allowedVoters
         ));
-
-        /** @dev update allowedVoters map */
+        //update allowedVoters map
         for(uint256 i=0;i<_allowedVoters.length;i++){
             allowedVoters[_category][_allowedVoters[i]]=true;
         }
@@ -394,7 +444,7 @@ contract ZuriSchool {
     * @dev function cannot be called if contract is paused
     * @return category and candidate voted for
     */
-     function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
+    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
         
         require(allowedVoters[_category][stakeholders[msg.sender].role]==true,"You are not Qualified to vote for this category ");
         
@@ -402,10 +452,7 @@ contract ZuriSchool {
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         
         /** @notice require that the session for voting is not yet ended */
-        require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
-        
-        /// @notice check that a candidate is valid for a vote in a category
-        // require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
+        require(activeElections[_category].VotingEnded ==false,"Voting has not ended for this Category");
         
         /** @notice check that votes are not duplicated */
         require(votedForCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");

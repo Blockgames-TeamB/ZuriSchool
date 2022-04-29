@@ -3,6 +3,11 @@ const { ethers, getChainId } = require("hardhat");
 
 let tokenContract,votingContract;
 
+/**
+ * student - fourthAddress
+ * teacher - secondAddress
+ * 
+ */
 describe("ZuriToken and ZuriVoting Contract Deployment...", function(){
     ;
     it("should deploy the ZuriToken contract", async function(){
@@ -100,42 +105,6 @@ describe("Check Role of a stakeholder...",function(){
         console.log('\t',"Passed ....");     
     });
 })
-///@notice test for assigning roles to stakeholders.
-describe("Assign Role of a stakeholders...",function(){
-    it("Should not be able to assign role if caller is not the chairman",async function(){
-        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
-        console.log('\t',"Attempting to assign role as a non chairman....");
-        await expect(votingContract.connect(secondAddress).assignRole("teacher",secondAddress.address)).to.be.revertedWith("Access granted to only the chairman");
-        console.log('\t',"Passed ....");
-    });
-    it("Should be able to assign role if caller is the chairman",async function(){
-        const [owner,secondAddress] = await ethers.getSigners();
-        console.log('\t',"Attempting to assign role as a chairman....");
-        //add address as a stakeholder
-        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,2,[secondAddress.address]);
-        assignRole =await votingContract.connect(owner).assignRole("teacher",secondAddress.address);
-        const tx = await assignRole.wait();
-        expect(tx.status).to.equal(1);
-        console.log('\t',"Passed ....");
-    });
-    it("Should revert if address is not a stakeholder",async function(){
-        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
-        console.log('\t',"Attempting to assign role to a non stakeholder....");
-         await expect(votingContract.connect(owner).assignRole("teacher",thirdAddress.address)).to.be.revertedWith("Can't assign a role to a non stakeholder.")
-        console.log('\t',"Passed ....");
-    });
-    it("Should assign director role",async function(){
-        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress] = await ethers.getSigners();
-        console.log('\t',"Attempting to assign role as a chairman....");
-        //add address as a stakeholder
-        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",20,3,[seventhAddress.address]);
-        assignRole =await votingContract.connect(owner).assignRole("director",seventhAddress.address);
-        const tx = await assignRole.wait();
-        expect(tx.status).to.equal(1);
-        console.log('\t',"Passed ....");
-    
-    });
-})
 
 ///@notice test for uploading stakeholders with different roles.
 describe("Uploading stakeholders...",function(){
@@ -225,7 +194,6 @@ describe("Registering Candidates for an Election...",function(){
         const [owner,secondAddress,thirdAddress,fourthAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to register candidate when caller is not a teacher.");
         //remove teacher role from an address
-        addTeacher = await votingContract.connect(owner).assignRole("teacher",secondAddress.address);
         registerCandidate1 =await votingContract.connect(secondAddress).registerCandidate("Santa","president");
         const tx = await registerCandidate1.wait();
         expect(tx.status).to.be.equal(1);
@@ -286,8 +254,6 @@ describe("Add Categories of an Election...",function(){
         const [owner,secondAddress,thirdAddress,fourthAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to add a category when caller is not a teacher.");
         //remove teacher role from an address
-
-        addTeacher = await votingContract.connect(owner).assignRole("teacher",secondAddress.address);
         addCategory1 =await votingContract.connect(secondAddress).addCategories("headboy");
         const tx = await addCategory1.wait();
         expect(tx.status).to.be.equal(1);
@@ -723,5 +689,44 @@ describe("Show election Queue",function(){
         showQueue = await votingContract.connect(owner).showQueue();
         expect(showQueue.length).to.be.greaterThan(1);
         console.log("passed..."); 
+    });
+})
+
+///@notice test for Changing Chairmanroles to stakeholders.
+describe("Change Chairman role...",function(){
+    it("Should not be able to Change Chairman role if caller is not the chairman",async function(){
+        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Change Chairman role as a non chairman....");
+        await expect(votingContract.connect(secondAddress).changeChairman(secondAddress.address)).to.be.revertedWith("Access granted to only the chairman");
+        console.log('\t',"Passed ....");
+    });
+   
+    it("Should revert if address is not a stakeholder",async function(){
+        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress,eightAddress,ninthAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Change Chairman role to a non stakeholder....");
+        await expect(votingContract.connect(owner).changeChairman(ninthAddress.address)).to.be.revertedWith("Can't assign a role of chairman to a non stakeholder.")
+        console.log('\t',"Passed ....");
+    });
+    it("Should revert when contract is paused",async function(){
+        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to assign role as a chairman....");
+        //add address as a stakeholder
+        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",20,3,[seventhAddress.address]);
+        const paused = await votingContract.connect(owner).setPaused(true);
+        await expect(votingContract.connect(owner).changeChairman(seventhAddress.address)).to.be.revertedWith("Contract is currently paused");
+        const unpaused = await votingContract.connect(owner).setPaused(false);
+        console.log('\t',"Passed ....");
+    
+    });
+    it("Should be able to Change Chairman role if caller is the chairman",async function(){
+        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress,eightAddress] = await ethers.getSigners();
+        console.log('\t',"Attempting to Change Chairman role as a chairman....");
+        //add address as a stakeholder
+        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("teacher",10,2,[secondAddress.address]);
+        addStakeholder1 = await votingContract.connect(owner).uploadStakeHolder("director",20,3,[eightAddress.address]);
+        changeChairman =await votingContract.connect(owner).changeChairman(eightAddress.address);
+        const tx = await changeChairman.wait();
+        expect(tx.status).to.equal(1);
+        console.log('\t',"Passed ....");
     });
 })

@@ -22,14 +22,6 @@ import "./ZuriSchoolToken.sol";
 /// @author TeamB - Blockgames Internship 22
 /// @title A Voting Dapp
 
-// interface ZuriSchoolToken {
-//     /// @dev balanceOf returns the number of token owned by the given address
-//     /// @param owner - address to fetch number of token for
-//     /// @return Returns the number of tokens owned
-//     function balanceOf(address owner) external view returns (uint256);
-// }
-
-
 contract ZuriSchool {
 
     constructor(address _tokenAddr) {
@@ -187,11 +179,9 @@ contract ZuriSchool {
             address stakeholderAddress
     ); 
 
-    /// @notice emit when role is removed
-    event RemoveRole(address remover, address addr);
 
     /// @notice emit when role is appointed
-    event AssignedRole (address adder, address newRole);   
+    event ChangeChairman (address adder, address newChairman);   
      
     /// @notice emit when candidate has been registered
     event CandidateRegisteredEvent( 
@@ -226,12 +216,16 @@ contract ZuriSchool {
         return compareStrings( _role,stakeholders[_address].role);
     }     
     
-    function assignRole(string memory _role,address _stakeHolder) onlyChairman onlyWhenNotPaused public{
-        require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role to a non stakeholder.");
-        /// @notice assign role to stakeholder
-        stakeholders[_stakeHolder].role = _role;
-        /// @notice emit event of new teacher
-        emit AssignedRole(msg.sender, _stakeHolder);
+    function changeChairman(address _stakeHolder) onlyChairman onlyWhenNotPaused public{
+        require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role of chairman to a non stakeholder.");
+        /// @notice change chairman role 
+        stakeholders[_stakeHolder].role = "chairman";
+        stakeholders[msg.sender].role = "director";
+        stakeholders[msg.sender].votingPower= 3;
+        stakeholders[msg.sender].votingPower= 4;
+        chairman = _stakeHolder;
+        /// @notice emit event of new chairman
+        emit ChangeChairman(msg.sender, _stakeHolder);
     }    
 
     function uploadStakeHolder(string memory _role,uint256 _amountOftoken,uint256 votingPower,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {

@@ -17,6 +17,7 @@ contract ZuriSchoolToken is ERC20 {
     
     /// ------------------------------------- MAPPING ------------------------------------------ ///
     mapping(address => bool) public teacher;
+    mapping(address => bool) public director;
 
 
     /// ------------------------------------- MODIFIER ------------------------------------------ ///
@@ -26,6 +27,14 @@ contract ZuriSchoolToken is ERC20 {
         /** @notice check that sender is the chairman or teacher */
         require(msg.sender == chairman || teacher[msg.sender] == true, 
         "Access granted to only the chairman or teacher");
+        _;
+    }
+/** @notice modifier to restrict who can call the function */
+     modifier onlyDirector() {
+
+        /// @notice check that sender is the chairman
+        require(director[msg.sender] == true, 
+        "Access granted to only directors");
         _;
     }
 
@@ -43,6 +52,10 @@ contract ZuriSchoolToken is ERC20 {
         _mint(_to, _amount);
     }
 
+function changeChairman(address _address) external onlyDirector {
+       require(teacher[_address] == true || director[_address]==true, "Must have been previously registered");
+       chairman = _address;
+   }
     /** @notice mints specified amount of tokens to stakeholders. */
     function mintToStakeholder(uint256 _amountOftoken, string calldata _role, address[] calldata _address) external  {
         
@@ -58,13 +71,19 @@ contract ZuriSchoolToken is ERC20 {
         for (uint i = 0; i < _address.length; i++) {
             
             /** @dev mint 5 tokens to students,10 tokens to teachers and 20 to directors */
-             if(teacher[_address[i]] == false)
+             if(teacher[_address[i]] == false || director[_address[i]]==false)
                 {
                     _mint(_address[i],_amountOftoken*1e18);
 
                     if(compareStrings(_role,"teacher")) {
-                        teacher[_address[i]]=true; }  
-                }   
+                        teacher[_address[i]]=true; 
+                        } 
+                      if(compareStrings(_role,"director"))
+                 {
+                     director[_address[i]]=true; }  
+                     } 
+                        
+                 
             }       
         }
     }

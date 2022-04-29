@@ -461,6 +461,9 @@ contract ZuriSchool {
         /** @notice check that balance of voter is greater than zero.. 1 token per votes */
         require(zstoken.balanceOf(msg.sender) >1*1e18,"YouR balance is currently not sufficient to vote. Not a stakeholder");
       
+      /// @notice check that a candidate is valid for a vote in a category
+        require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
+        
         /** @notice ensure that there are no duplicate votes recorded for a candidates category. */
         uint256 votes = votesForCategory[_candidateID][Category[_category]]+=stakeholders[msg.sender].votingPower;
         candidates[_candidateID].voteCount = votes;

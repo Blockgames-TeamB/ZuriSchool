@@ -15,7 +15,6 @@ function DirectorPortal() {
     Compile,
     publish,
     updateChairman,
-    changeTokenChairman,
     voteConsensus,
     electionList,
   } = useContext(ConnectContext);
@@ -44,7 +43,7 @@ function DirectorPortal() {
    
 
      await updateChairman(chairman);
-    await changeTokenChairman(chairman)
+    
     setChairman("");
     
   };

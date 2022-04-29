@@ -1,15 +1,6 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.10;
 
-interface ZuriSchoolToken{
-    /// @dev balanceOf returns the number of token owned by the given address
-    /// @param owner - address to fetch number of token for
-    /// @return Returns the number of tokens owned
-    function balanceOf(address owner) external view returns (uint256);
-    
-}
-
-
 /** 
 * @dev flow process
 * @dev -1- register address as stakeholders
@@ -24,6 +15,15 @@ interface ZuriSchoolToken{
 */ 
 
 
+interface ZuriSchoolToken{
+    /**
+    * @dev balanceOf returns the number of token owned by the given address
+    * @param owner - address to fetch number of token for
+    * @return Returns the number of tokens owned
+    */
+    function balanceOf(address owner) external view returns (uint256);
+}
+
 /**
 * @author TeamB - Blockgames Internship 22
 * @title A Voting Dapp
@@ -32,9 +32,7 @@ contract ZuriSchool {
 
     constructor(address _tokenAddr) {
         zstoken = ZuriSchoolToken(_tokenAddr);
-        
-       
-        
+            
         /** @notice add chairman is the deployer of the contract */
         chairman = msg.sender;
         
@@ -92,12 +90,8 @@ contract ZuriSchool {
     /** @notice CategoryTrack */
     uint256 count = 1;
 
-    
-
     /** @notice declare state variable _paused */
     bool public _paused;
-
-   
 
     /** @notice election array */
     Election[] public activeElectionArrays;
@@ -115,8 +109,6 @@ contract ZuriSchool {
     
     /** @notice mapping to check votes for a specific category */
     mapping(uint256=>mapping(uint256=>uint256)) public votesForCategory;
-
-   
     
     /** @notice mapping for converting category string to uint */
     mapping(string => uint256) public Category;
@@ -127,7 +119,7 @@ contract ZuriSchool {
     /** @notice tracks the active election */
     mapping(string=>Election) public activeElections;
 
- /** @notice tracks the index of active election */
+    /** @notice tracks the index of active election */
     mapping(string => uint) public activeModify;
   
 
@@ -189,7 +181,6 @@ contract ZuriSchool {
     event StakeholderRegisteredEvent (
             string _role,address[] stakeholderAddress
     ); 
-
 
     /// @notice emit when role is appointed
     event ChangeChairman (address adder, address newChairman);   
@@ -276,20 +267,14 @@ contract ZuriSchool {
         require(Category[_category] != 0,"Category does not exist...");
         
         /** @dev initial state check */
-        
             candidatesCount++;
-        
         
         /** @notice add to candidate map by passing in the candidateCount aka id */
         candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], 0 );
         
-        
-        
-        
         /** @notice emit event when candidate is registered */
         candidatesCount;
         emit CandidateRegisteredEvent(candidatesCount);
-
     }
 
     /** 
@@ -307,20 +292,19 @@ contract ZuriSchool {
         count++;
         return _category;
     }
-
    
-   
-///@notice function that return list of candidates
+`   /**
+    * @notice function that return list of candidates
+    * @dev function cannot be called if contract is paused
+    */
     function getCandidates() public view  returns (Candidate[] memory) {
         Candidate[] memory contestants = new Candidate[] (candidatesCount);
         for(uint i=0; i < candidatesCount; i++){
             Candidate storage candidate = candidates[i+1];
             contestants[i] = candidate;
-
         }
         return contestants;
     }
-   
 
     /**
     * @notice setup election
@@ -407,8 +391,6 @@ contract ZuriSchool {
         
         /** @notice require that the session for voting is not yet ended */
         require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
-        
-       
     
         /// @notice check that a candidate is valid for a vote in a category
         // require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");

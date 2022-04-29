@@ -101,7 +101,7 @@ contract ZuriSchool {
 
     /**@notice directors counter */
     uint256 directorsCount;
-
+    
 
     /// ------------------------------------- MAPPING ------------------------------------------ ///
     /** @notice mapping for list of stakeholders addresses */
@@ -128,11 +128,12 @@ contract ZuriSchool {
     /** @notice tracks the index of active election */
     mapping(string => uint) public activeModify;
 
+    /** @notice director's consensus vote map */
+    mapping(address=>bool) private hasConsented;
+
     /**@notice allowed voters (category=>user roles= true/false) */
     mapping(string=>mapping(string=>bool)) private allowedVoters;
   
-    /** @notice director's consensus vote map */
-    mapping(address=>bool) private hasConsented;
 
     /// ------------------------------------- MODIFIER ------------------------------------------- ///
     /** @notice modifier to check that only the registered stakeholders can call a function */
@@ -142,6 +143,12 @@ contract ZuriSchool {
         require(stakeholders[msg.sender].isRegistered, 
            "You must be a registered stakeholder");
        _;
+    }
+
+    /** @notice modifier to check that only the director can call a function */
+    modifier onlyDirector() {
+        require(compareStrings(stakeholders[msg.sender].role, "director"),"Only Directors have access");
+        _;
     }
     
     /** @notice modifier to check that only the chairman or teacher can call a function */
@@ -186,12 +193,6 @@ contract ZuriSchool {
         _;
     }
 
-    /** @notice modifier to check that only the director can call a function */
-    modifier onlyDirector() {
-        require(compareStrings(stakeholders[msg.sender].role, "director"),"Only Directors have access");
-        _;
-    }
-
 
     /// ---------------------------------------- EVENTS ----------------------------------------- ///
     /** @notice emit when a stakeholder is registered */
@@ -221,6 +222,10 @@ contract ZuriSchool {
     
     /** @notice emit when votes have been counted */
     event VotesCountedEvent (string category,uint256 totalVotes);
+
+    /** @notice emit event when concensus has been reached */
+    event ConcensusVote(address director,bool consent);
+
     
     /// --------------------------------------- FUNCTIONS ------------------------------------------- ///
     /** @dev helper function to compare strings */
@@ -236,6 +241,46 @@ contract ZuriSchool {
         returns (bool) {
         return compareStrings( _role,stakeholders[_address].role);
     }     
+    
+    /** 
+    * @notice director's consensus vote function
+    * @dev can be called by only the director
+    */
+    function concensusVote() public onlyDirector {
+        require(hasConsented[msg.sender]==false,"You have already consented..");
+        hasConsented[msg.sender]=true;
+        consensus.push(msg.sender);
+
+        /** @notice emit event of consesus results */
+        emit ConcensusVote(msg.sender,true);
+    }
+    
+    /** 
+    * @notice function to change directors
+    * @dev can be called by only the directors
+    * @dev function cannot be called when contract is paused
+    */
+    function changeChairman(address _stakeHolder) onlyDirector onlyWhenNotPaused public{
+        require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role of chairman to a non stakeholder.");
+        uint256 consensusCheckpoint = 75*directorsCount;
+        require(consensus.length*100 > consensusCheckpoint,"Requires Greater than 75% consent of Directors to approve!");
+        
+        /** @notice change chairman role */
+        stakeholders[_stakeHolder].role = "chairman";
+        stakeholders[chairman].role = "director";
+        stakeholders[chairman].votingPower= 3;
+        stakeholders[_stakeHolder].votingPower= 4;
+        chairman = _stakeHolder;
+        address[] memory _consensus = consensus;
+        for(uint256 i;i<_consensus.length;i++){
+            hasConsented[_consensus[i]]=false;
+        }
+        
+        delete consensus;
+
+        /** @notice emit event of new chairman */
+        emit ChangeChairman(msg.sender, _stakeHolder);
+    } 
 
     /**
     * @notice upload csv file of stakeholders
@@ -332,8 +377,7 @@ contract ZuriSchool {
             0,
             _allowedVoters
         ));
-
-        /** @dev update allowedVoters map */
+        //update allowedVoters map
         for(uint256 i=0;i<_allowedVoters.length;i++){
             allowedVoters[_category][_allowedVoters[i]]=true;
         }

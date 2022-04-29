@@ -400,7 +400,7 @@ contract ZuriSchool {
     * @dev function cannot be called if contract is paused
     * @return category and candidate voted for
     */
-    function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
+     function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
         
         require(allowedVoters[_category][stakeholders[msg.sender].role]==true,"You are not Qualified to vote for this category ");
         
@@ -408,7 +408,10 @@ contract ZuriSchool {
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         
         /** @notice require that the session for voting is not yet ended */
-        require(activeElections[_category].VotingEnded ==false,"Voting has not ended for this Category");
+        require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
+        
+        /// @notice check that a candidate is valid for a vote in a category
+        // require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
         
         /** @notice check that votes are not duplicated */
         require(votedForCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");

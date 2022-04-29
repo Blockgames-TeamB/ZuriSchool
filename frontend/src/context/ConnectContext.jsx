@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 
 import { contractABI, contractAddress } from "../utils/constants";
+import { contractABIToken, contractAddressToken } from "../utils/tokenConstants";
 
 export const ConnectContext = React.createContext();
 
@@ -14,13 +15,22 @@ const createEthereumContract = () => {
  
   return zuriSchoolContract;
 };
+const createEthereumContractToken = () => {
+  const provider = new ethers.providers.Web3Provider(ethereum);
+  const signer = provider.getSigner();
+  const zuriTokenContract = new ethers.Contract(contractAddressToken, contractABIToken, signer);
+ 
+  return zuriTokenContract;
+};
+
+ 
 
 
-const upload = async(_role, Arr) => {
+const upload = async(_role, votingWeight,Arr) => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.uploadStakeHolder(_role, Arr, {gasLimit:300000});
+   const result =await contract.uploadStakeHolder(_role, votingWeight, Arr, {gasLimit:600000});
   
   return result
   }
@@ -42,12 +52,12 @@ const setupElection = async(_category, idArr) => {
  
  }
 }
-const electionQueue = async() => {
-  const contract = createEthereumContract();
+const mint = async(role, amount, Arr) => {
+  const contract = createEthereumContractToken();
   
  try {
-   const result =await contract.showQueue();
-  
+   const result =await contract.mintToStakeholder(role, amount, Arr, {gasLimit:300000});
+
   return result
   }
  catch(error){
@@ -55,11 +65,25 @@ const electionQueue = async() => {
  
  }
 }
+const clear = async() => {
+  const contract = createEthereumContractToken();
+  
+ try {
+  await contract.clearElectionQueue();
+
+ 
+  }
+ catch(error){
+   console.log(error)
+ 
+ }
+}
+
 const startVoting = async(_category) => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.startVotingSession(_category, {gasLimit:300000});
+   const result =await contract.startVotingSession(_category, {gasLimit:600000});
   
   return result
   }
@@ -72,9 +96,8 @@ const endVoting = async(_category) => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.endVotingSession(_category);
-  
-  return result
+  await contract.endVotingSession(_category, {gasLimit:600000});
+ 
   }
  catch(error){
    console.log(error)
@@ -85,7 +108,7 @@ const publish = async(_category) => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.makeResultPublic(_category);
+   const result =await contract.makeResultPublic(_category, {gasLimit:600000});
   
   return result
   }
@@ -94,19 +117,7 @@ const publish = async(_category) => {
  
  }
 }
-const clear = async() => {
-  const contract = createEthereumContract();
-  
- try {
-   const result =await contract.clearElectionQueue();
-  
-  return result
-  }
- catch(error){
-   console.log(error)
- 
- }
-}
+
 const RegisterCandidate = async(name, _category) => {
   const contract = createEthereumContract();
   
@@ -120,12 +131,42 @@ const RegisterCandidate = async(name, _category) => {
  
  }
 }
+const candidateName = async(id) => {
+  const contract = createEthereumContract();
+  
+ try {
+   const result =await contract.getCandidateName(id, {gasLimit:300000});
+  //  console.log(result)
+  return result
+  }
+ catch(error){
+   console.log(error)
+ 
+ }
+}
 const AddCategory = async(_category) => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.addCategories(_category, {gasLimit:300000});
+   const result =await contract.addCategories(_category);
+   
   
+
+  return result
+  }
+ catch(error){
+   console.log(error)
+ 
+ }
+}
+const updateChairman = async(addr) => {
+  const contract = createEthereumContract();
+  
+ try {
+   const result =await contract.changeChairman(addr);
+   
+  
+
   return result
   }
  catch(error){
@@ -147,11 +188,11 @@ const electionList = async() => {
   
  }
 }
-const fetchCategory = async() => {
+const candidateList = async() => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.showCategories();
+   const result =await contract.getCandidates();
   
   return result
   }
@@ -160,6 +201,7 @@ const fetchCategory = async() => {
   
  }
 }
+
 const Compile = async(_category) => {
   const contract = createEthereumContract();
   
@@ -199,11 +241,11 @@ const getResult = async(_category) => {
   
  }
 }
-const checkChairman = async(addr) => {
+const check = async(role, addr) => {
   const contract = createEthereumContract();
   
  try {
-   const result =await contract.isChairman(addr);
+   const result =await contract.checkRole(role, addr);
   
   return result
   }
@@ -260,6 +302,7 @@ export const ConnectProvider = ({ children }) =>{
        if (chainId ==4) {setnetworkConnected("Rinkeby")}
        if (chainId ==5) {setnetworkConnected("Goerli")}
        if (chainId ==137) {setnetworkConnected("Polygon")}
+       if (chainId ==80001) {setnetworkConnected("Mumbai")}
       
       
       
@@ -299,15 +342,13 @@ export const ConnectProvider = ({ children }) =>{
     return (
       <ConnectContext.Provider
         value={{
-
+          
           connectWallet,
           currentAccount,
           networkConnected,
           setupElection,
-          fetchCategory,
           RegisterCandidate,
           AddCategory,
-          electionQueue,
           startVoting,
           endVoting,
           Compile,
@@ -317,8 +358,12 @@ export const ConnectProvider = ({ children }) =>{
           Voting,
           getResult,
           electionList,
-          checkChairman,
-          pauseContract
+          check,
+          candidateName,
+          pauseContract,
+          candidateList,
+          mint,
+          updateChairman
         }}
       >
         {children}

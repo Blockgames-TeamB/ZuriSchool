@@ -6,19 +6,45 @@ import Header from '../partials/Header';
 import Sidebar from "../components/Sidebar"
 import { ConnectContext } from "../context/ConnectContext";
 function VotingBooth() {
-  const { electionList, Voting } = useContext(ConnectContext);
+  const { electionList, Voting, candidateList } = useContext(ConnectContext);
   const [activeElection, setactiveElection] = useState([])
+  const [arr, setarr] = useState([])
   const [choice, setChoice] = useState()
-  
+  // const [cnumber1, setcnumber1] = useState("")
+  // const [cnumber2, setcnumber2] = useState("")
+  // const [cnumber3, setcnumber3] = useState("")
+  // const [count, setCount] = useState()
+ 
   const fetch= async()=>{
     const result = await electionList()
     setactiveElection(result)
+    
   }
+  const fetchCandidate= async()=>{
+    const result = await candidateList()
+  
+    setarr(result)
+    
+  }
+  // const Name= await candidateName(id)
+  
 
+  
+   
+   
+   
+ 
+ 
   useEffect(()=>{
 fetch()
+fetchCandidate()
 
   })
+  useEffect(()=>{
+
+fetchCandidate()
+
+  },[activeElection])
   return (
 <div id="outer-container">
     <Sidebar pageWrapId={ "page-wrap" } outerContainerId={ "outer-container" } />
@@ -47,9 +73,11 @@ fetch()
           </div>
           {activeElection.map((election, key)=>{
 
-            if(election.VotingEnded) {
+            
+
+            if(!election.VotingEnded) {
               return (
-                <div class="md:col-span-2 xl:col-span-1" id={key} >
+                <div class="md:col-span-2 xl:col-span-3" key={key} >
               <div class="rounded bg-gray-200 dark:bg-gray-800 p-3">
                 <div class="flex justify-between py-1 text-black dark:text-white">
                   <h3 class="text-sm font-semibold">{(election.category).toUpperCase()}</h3>
@@ -57,8 +85,14 @@ fetch()
                 </div>
                 <div class="text-sm text-black dark:text-gray-50 mt-2">
                   {election.candidatesID.map((id, key)=>{
+                  
+             
+                  
+                  
+                   
+                   
                     return(
-  <div id={key} class="bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded mt-1 border-b border-gray-100 dark:border-gray-900 cursor-pointer">
+  <div key={key} class="bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded mt-1 border-b border-gray-100 dark:border-gray-900 cursor-pointer">
                     
                     <div class="flex items-center text-sm">
                     <div className='pr-4'>
@@ -68,12 +102,23 @@ fetch()
                          </div>{""} 
                          <div class="relative hidden w-8 h-8 mr-3 rounded-full md:block">
                            <img class="object-cover w-full h-full rounded-full" src="https://images.unsplash.com/flagged/photo-1570612861542-284f4c12e75f?ixlib=rb-1.2.1&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=200&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjE3Nzg0fQ" alt="" loading="lazy" />
-                           <div class="absolute inset-0 rounded-full shadow-inner" aria-hidden="true"></div>
-                         </div>
-                         <div>
-                         {(id).toNumber()}
+                           <div class="absolute inset-0 rounded-full shadow-inner" aria-hidden="true">
                           
+                           </div>
+                         </div> 
+                          
+                           <div>
+                         {arr.map((candy, key)=>
+                         {
+                          if(key+1==id) {
+                            return candy.name
+                          }
+                         })}
                          </div>
+                         
+                         
+                        
+
                        </div></div>
                     )
                   })}

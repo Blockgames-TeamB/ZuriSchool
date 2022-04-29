@@ -54,9 +54,9 @@ fetch()
           
           {activeElection.map((election, key)=>{
 
-            if(!election.isResultPublic) {
+            if(election.isResultPublic) {
               return (
-                <div class="md:col-span-2 xl:col-span-1" id={key} >
+                <div class="md:col-span-2 xl:col-span-1" key={key} >
               <div class="rounded bg-gray-200 dark:bg-gray-800 p-3">
                 <div class="flex justify-between py-1 text-black dark:text-white">
                   <h3 class="text-sm font-semibold">{(election.category).toUpperCase()}</h3>
@@ -70,7 +70,7 @@ fetch()
                     
                          
                          <div>
-                          Kindly Await Result.
+                          Result is ready
                           
                          </div>
                        </div></div>
@@ -173,11 +173,11 @@ fetch()
     <dl>
       <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
         <dt class="text-sm font-medium text-gray-500">Candidate ID: </dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[0].toNumber()}</dd>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[0].id.toNumber()}</dd>
       </div>
       <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
         <dt class="text-sm font-medium text-gray-500">Name: </dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[1]}</dd>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[0].name}</dd>
       </div>
       <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
         <dt class="text-sm font-medium text-gray-500">Position Contested: </dt>
@@ -185,7 +185,11 @@ fetch()
       </div>
       <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
         <dt class="text-sm font-medium text-gray-500">Votes Earned: </dt>
-        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[3].toNumber()}</dd>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[0].voteCount.toNumber()}</dd>
+      </div>
+      <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+        <dt class="text-sm font-medium text-gray-500">Total Casted Votes: </dt>
+        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{winner[1].toNumber()}</dd>
       </div>
       
      

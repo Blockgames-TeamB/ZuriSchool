@@ -18,10 +18,12 @@ contract ZuriSchoolToken is ERC20 {
     /// ------------------------------------- MAPPING ------------------------------------------ ///
     mapping(address => bool) public teacher;
 
+
     /// ------------------------------------- MODIFIER ------------------------------------------ ///
+    /** @notice modifier to restrict who can call the function */
     modifier onlyAccess() {
 
-        /// @notice check that sender is the chairman
+        /** @notice check that sender is the chairman or teacher */
         require(msg.sender == chairman || teacher[msg.sender] == true, 
         "Access granted to only the chairman or teacher");
         _;
@@ -41,14 +43,12 @@ contract ZuriSchoolToken is ERC20 {
         _mint(_to, _amount);
     }
 
-    /** 
-    * @notice mints specified amount of tokens to stakeholders.
-    * @dev callable only by owner of contract
-    */
+    /** @notice mints specified amount of tokens to stakeholders. */
     function mintToStakeholder(uint256 _amountOftoken, string calldata _role, address[] calldata _address) external  {
         
         /** 
         * @notice upload the list of students and mint the specified amount of tokens to each address
+        * @dev check that the list is not empty
         */
         require(
             _address.length >0,
@@ -56,7 +56,8 @@ contract ZuriSchoolToken is ERC20 {
         );
         
         for (uint i = 0; i < _address.length; i++) {
-                /** @dev mint 5 tokens to students,10 tokens to teachers and 20 to directors */
+            
+            /** @dev mint 5 tokens to students,10 tokens to teachers and 20 to directors */
              if(teacher[_address[i]] == false)
                 {
                     _mint(_address[i],_amountOftoken*1e18);

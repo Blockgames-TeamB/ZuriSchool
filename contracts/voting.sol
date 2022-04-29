@@ -2,18 +2,17 @@
 pragma solidity ^0.8.10;
 
 /** 
-* @dev flow process
-* @dev -1- register address as stakeholders
-* @dev -2- add category
-* @dev -3- register candidates
-* @dev -4- setup election
-* @dev -5- start voting session
-* @dev -6- vote 
-* @dev -7- end voting session
-* @dev -8- compile votes
-* @dev -9- make results public
+* @dev FLOW PROCESS
+* @dev -1- Upload address of stakeholders
+* @dev -2- Add category
+* @dev -3- Register candidates
+* @dev -4- Setup election
+* @dev -5- Start voting session
+* @dev -6- Vote 
+* @dev -7- End voting session
+* @dev -8- Compile votes
+* @dev -9- Make results public
 */ 
-
 
 interface ZuriSchoolToken{
     /**
@@ -293,7 +292,7 @@ contract ZuriSchool {
         return _category;
     }
    
-`   /**
+   /**
     * @notice function that return list of candidates
     * @dev function cannot be called if contract is paused
     */

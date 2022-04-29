@@ -2,7 +2,9 @@ import React, {useState, useContext, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 
 
+import { ethers } from "ethers";
 
+import { contractABI, contractAddress } from "../utils/constants";
 import Header from '../partials/Header';
 import Sidebar from "../components/Sidebar"
 import { ConnectContext } from "../context/ConnectContext";
@@ -12,16 +14,17 @@ function DirectorPortal() {
    
     Compile,
     publish,
-    
-    
-    
+    updateChairman,
+    voteConsensus,
     electionList,
   } = useContext(ConnectContext);
 
  
 
  
-
+  const [showConsensusModal, setshowConsensusModal] = useState(false);
+  const [chairman, setChairman] = useState("");
+  const [showChrModal, setshowChrModal] = useState(false);
   const [activeElection, setactiveElection] = useState([]);
   
 
@@ -35,9 +38,19 @@ function DirectorPortal() {
     setactiveElection(result);
   };
 
+  const handleChairman = async (e) => {
+    e.preventDefault();
+   
+
+     await updateChairman(chairman);
+    
+    setChairman("");
+    
+  };
+
   useEffect(() => {
     fetch();
-  },[candidateID]);
+  });
 
   useEffect(() => {
     let ZuriSchoolContract;
@@ -220,9 +233,181 @@ function DirectorPortal() {
 
               
             
-        {/* <!-- ./Client Table --> */}
+        {/* <!-- ./modal  --> */}
+
+
+
+         {/* Change Chairman Modal */}
+         {showChrModal ? (
+                  <>
+                    <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+                      <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                        {/*content*/}
+                        <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                          {/*header*/}
+                          <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
+                            <h3 className="text-3xl font-semibold">
+                              Update Chairmanship
+                            </h3>
+                          </div>
+                          {/*body*/}
+                          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                            <div class="flex justify-end p-2"></div>
+                            <form
+                              class="px-6 pb-4 space-y-6 lg:px-8 sm:pb-6 xl:pb-8"
+                              action="#"
+                            >
+                              <h3 class="text-xl font-medium text-gray-900 dark:text-white">
+                                Type in the Address of the New Chairman
+                              </h3>
+
+                              <div>
+                                <label
+                                  for="chairman"
+                                  class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                                >
+                                  Address:
+                                </label>
+                                <input
+                                  type="text"
+                                  name="candidates"
+                                  id="candidates"
+                                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                                  placeholder=""
+                                  required
+                                  value={chairman}
+                                  onChange={(e) =>
+                                    setChairman(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <button
+                                type="submit"
+                                class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                onClick={(e) => handleChairman(e)}
+                              >
+                                Change Chairman
+                              </button>
+                            </form>
+                          </div>
+                          {/*footer*/}
+                          <div className="flex items-center justify-center p-6 border-t border-solid border-slate-200 rounded-b">
+                            <button
+                              className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                              type="button"
+                              onClick={() => setshowChrModal(false)}
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+                  </>
+                ) : null}
+
+               {/* <!-- students Upload Modal --> */}
+
+               {showConsensusModal ? (
+                  <>
+                    <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+                      <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                        {/*content*/}
+                        <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                          {/*header*/}
+                          <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
+                            <h3 className="text-3xl font-semibold">
+                            Give Consent for Change
+                            </h3>
+                          </div>
+                          {/*body*/}
+                          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                            <div class="flex justify-end p-2"></div>
+                            <div
+                              class="px-6 pb-4 space-y-6 lg:px-8 sm:pb-6 xl:pb-8"
+                              action="#"
+                            >
+                              <h3 class="text-xl font-medium text-gray-900 dark:text-white">
+                              Click the button to vote for a chairman change
+                              </h3>
+                              <button
+                                  type="button"
+                                  class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                                  onClick={(e) =>
+                                    voteConsensus(e)
+                                  }
+                                >
+                                  Give Consent
+                                </button>
+</div>
+                          </div>
+                          {/*footer*/}
+                          <div className="flex items-center justify-center p-6 border-t border-solid border-slate-200 rounded-b">
+                            <button
+                              className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                              type="button"
+                              onClick={() => {
+                                setshowConsensusModal(false)
+                               
+                              }}
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+                  </>
+                ) : null}
+ 
               
-              
+
+              {/* <!-- Task Summaries --> */}
+        <div class="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-3 p-4 gap-4 text-black dark:text-white">
+          
+         
+
+            
+
+          <div>
+                    <div class="rounded bg-gray-200 dark:bg-gray-800 p-3">
+                      <div class="flex justify-between py-1 text-black dark:text-white">
+                        <h3 class="text-sm font-semibold">
+                          Directorial Functions
+                        </h3>
+                        <svg
+                          class="h-4 fill-current text-gray-600 dark:text-gray-500 cursor-pointer"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M5 10a1.999 1.999 0 1 0 0 4 1.999 1.999 0 1 0 0-4zm7 0a1.999 1.999 0 1 0 0 4 1.999 1.999 0 1 0 0-4zm7 0a1.999 1.999 0 1 0 0 4 1.999 1.999 0 1 0 0-4z" />
+                        </svg>
+                      </div>
+                      <div class="text-sm text-black dark:text-gray-50 mt-2">
+                        <div
+                          class="bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded mt-1 border-b border-gray-100 dark:border-gray-900 cursor-pointer"
+                          onClick={() => setshowConsensusModal(true)}
+                        >
+                          Give Consent
+                        </div>
+                        <div
+                          class="bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded mt-1 border-b border-gray-100 dark:border-gray-900 cursor-pointer"
+                          onClick={() => setshowChrModal(true)}
+                        >
+                          Change Chairman
+                        </div>
+                       
+                      </div>
+                    </div>
+                  </div>
+            
+          
+         
+        </div>
+        {/* <!-- ./Task Summaries --> */}
+
         {/* <!-- Client Table --> */}
         { activeElection.length>0 ?
         <div class="mt-4 mx-4">

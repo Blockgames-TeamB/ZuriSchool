@@ -41,7 +41,23 @@ function TeacherPortal() {
   const [activeElection, setactiveElection] = useState([]);
   const [CategoryList, setCategoryList] = useState("");
 
-  // a boolean state to allow that only one of upload file button and upload button show at a time
+  const [category_check_list, setCategoryCheckList] = useState([]);
+
+  const categoryCheckboxFilterHandler = e => {
+      if (e.target.checked == true){
+          setCategoryCheckList([...category_check_list, e.target.value]);
+      }else{
+          let check_list = [];
+          category_check_list.map(check => {
+              if (check != e.target.value){
+                  check_list.push(check);
+              }
+          });
+          setCategoryCheckList(check_list);
+      }
+  };
+
+  const notify = (str) => toast(str);
 
   //fetchCategory,AddCategory
   const [isFileUpload, setisFileUpload] = useState(false);
@@ -98,24 +114,24 @@ function TeacherPortal() {
     notify("setting up election");
     const arr = candidateID.split(",");
     notify("election setup");
-    await setupElection(CategoryList, arr);
+    await setupElection(CategoryList, arr, category_check_list);;
   };
   
 
   const RegCandidate = async (e) => {
     e.preventDefault();
-   
+    notify("registering candidates");
     await RegisterCandidate(candidateName, CategoryList);
-  
+    notify("candidate registered");
     setcandidateName("");
   };
   
   const handleCategory = async (e) => {
     e.preventDefault();
+    // const notify = () => toast("Adding Category");
     
-
      await AddCategory(CategoryList);
-    
+     notify("category added");
     setCategoryList("");
     
   };
@@ -198,7 +214,7 @@ function TeacherPortal() {
               <div className="pt-32 pb-12 md:pt-40 md:pb-20">
                 {/* Page header */}
                 <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-                  <h1 className="h1">Welcome Teacher</h1>
+                  <h1 className="h1">Welcome Chairman</h1>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 p-4 gap-4">
@@ -630,9 +646,9 @@ function TeacherPortal() {
                               </h3>
 
                               <div>
-                                <label
-                                  for="candidates"
-                                  class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                              <label
+                                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                  for="grid-state"
                                 >
                                   Candidates IDs:
                                 </label>
@@ -641,7 +657,7 @@ function TeacherPortal() {
                                   name="candidates"
                                   id="candidates"
                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                  placeholder="name@company.com"
+                                  placeholder=""
                                   required
                                   value={candidateID}
                                   onChange={(e) => {
@@ -650,7 +666,7 @@ function TeacherPortal() {
                                 />
                               </div>
 
-                              <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                              <div>
                                 <label
                                   class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
                                   for="grid-state"
@@ -664,7 +680,7 @@ function TeacherPortal() {
                                     name="candidates"
                                     id="candidates"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="name@company.com"
+                                    placeholder=""
                                     required
                                     value={CategoryList}
                                     onChange={(e) => {
@@ -673,6 +689,37 @@ function TeacherPortal() {
                                   />
                                 </div>
                               </div>
+<div>
+<label
+                                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                  for="grid-state"
+                                >Participating Stakeholders</label>
+                              <div class=" flex justify-between w-full md:w-1/3 px-3 mb-6 md:mb-0">
+
+                                <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain  mr-2 cursor-pointer" type="checkbox" value="chairman"  onChange={e => categoryCheckboxFilterHandler(e)} />
+      <label class=" text-gray-800 mr-2">
+        Chairman{" "}
+      </label>
+      </div>
+    
+    <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="director"   onChange={e => categoryCheckboxFilterHandler(e)}/>
+      <label class=" text-gray-800 mr-2"  >
+        Directors
+      </label></div>
+    <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="teacher"   onChange={e => categoryCheckboxFilterHandler(e)} />
+      <label class="text-gray-800 mr-2" >
+        Teachers
+      </label></div>
+    <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="student"  onChange={e => categoryCheckboxFilterHandler(e)}   />
+      <label class="text-gray-800 mr-2" >
+        Students
+      </label></div>
+    </div>
+    </div>
                               <button
                                 class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                                 onClick={(e) => setupElect(e)}
@@ -868,6 +915,9 @@ function TeacherPortal() {
                     <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
                   </>
                 ) : null}
+
+
+                
             
         {/* <!-- ./Client Table --> */}
               

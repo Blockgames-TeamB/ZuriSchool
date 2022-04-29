@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { shortenAddress } from "../utils/shortenAddress";
+import { shortenAddress } from "../utils/ShortenAddress";
 
 import { ConnectContext } from "../context/ConnectContext";
 

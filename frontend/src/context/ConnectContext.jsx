@@ -40,11 +40,11 @@ const upload = async(_role, votingWeight,Arr) => {
  
  }
 }
-const setupElection = async(_category, idArr) => {
+const setupElection = async(_category, idArr, allowanceArr) => {
   const contract = createEthereumContract();
   notify("setting up election");
  try {
-   const result =await contract.setUpElection(_category, idArr, {gasLimit:300000});
+   const result =await contract.setUpElection(_category, idArr, allowanceArr, {gasLimit:300000});
    notify("election is ready for approval");
   return result
   }
@@ -68,8 +68,22 @@ const mint = async(role, amount, Arr) => {
  
  }
 }
-const clear = async() => {
+const changeTokenChairman = async(addr) => {
   const contract = createEthereumContractToken();
+  notify("changing chairman in token...");
+ try {
+   const result =await contract.changeChairman(addr);
+   notify("changed token chairman");
+  return result
+  }
+ catch(error){
+  notify("error, check console");
+   console.log(error)
+ 
+ }
+}
+const clear = async() => {
+  const contract = createEthereumContract();
   
  try {
   await contract.clearElectionQueue();
@@ -169,15 +183,32 @@ const AddCategory = async(_category) => {
 }
 const updateChairman = async(addr) => {
   const contract = createEthereumContract();
-  
+  notify("changing chairman in zurischool...");
  try {
    const result =await contract.changeChairman(addr);
    
-  
+   notify("changing chairman in zurischool...");
 
   return result
   }
  catch(error){
+   notify("error, check console")
+   console.log(error)
+ 
+ }
+}
+const voteConsensus = async() => {
+  const contract = createEthereumContract();
+  notify("voting for consensus")
+ try {
+   const result =await contract.concensusVote();
+   
+   notify("You have consented")
+
+  return result
+  }
+ catch(error){
+  notify("error, check console")
    console.log(error)
  
  }
@@ -373,7 +404,9 @@ export const ConnectProvider = ({ children }) =>{
           pauseContract,
           candidateList,
           mint,
-          updateChairman
+          updateChairman,
+          voteConsensus,
+          changeTokenChairman
         }}
       >
         {children}

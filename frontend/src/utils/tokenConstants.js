@@ -1,4 +1,4 @@
 import abi from "./ZuriToken.json";
 
-export const contractAddressToken = "0xA23a604A059313F0EaB0652Ae1240eA7c4C4C4b2";
+export const contractAddressToken = "0x719C920046A416e2cd7cD50B08C32E6C461b0D48";
 export const contractABIToken = abi.abi;

@@ -262,4 +262,3 @@ Before adding a pull request, please note:
 All **`suggestions`** are welcome!
 #
 > ###### README Created by `Pauline Banye` for TeamB
-Test

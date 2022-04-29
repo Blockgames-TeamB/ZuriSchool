@@ -1,6 +1,6 @@
 import React, {useState, useContext, useEffect} from 'react';
 
-
+import { toast } from "react-toastify";
 import { ethers } from "ethers";
 
 import { contractABI, contractAddress } from "../utils/constants";
@@ -95,25 +95,27 @@ function TeacherPortal() {
 
   const setupElect = async (e) => {
     e.preventDefault();
+    notify("setting up election");
     const arr = candidateID.split(",");
-
+    notify("election setup");
     await setupElection(CategoryList, arr);
   };
   
 
   const RegCandidate = async (e) => {
     e.preventDefault();
-
+   
     await RegisterCandidate(candidateName, CategoryList);
-
+  
     setcandidateName("");
   };
   
   const handleCategory = async (e) => {
     e.preventDefault();
-    // const notify = () => toast("Adding Category");
+    
 
      await AddCategory(CategoryList);
+    
     setCategoryList("");
     
   };

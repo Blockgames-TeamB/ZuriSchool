@@ -3,27 +3,6 @@ pragma solidity ^0.8.10;
 import "./ZuriSchoolToken.sol";
 
 
-<<<<<<< HEAD
-///students = ["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB"]
-///teachers = ["0x617F2E2fD72FD9D5503197092aC168c91465E7f2","0x17F6AD8Ef982297579C203069C1DbfFE4348c372","0x5c6B0f7Bf3E7ce046039Bd8FABdfD3f9F5021678"]
-///director = ["0x03C6FcED478cBbC9a4FAB34eF9f40767739D1Ff7","0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C","0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC"]
-
-/// @dev flow process
-/// @dev -1- register address as stakeholders
-/// @dev -2- add category
-/// @dev -3- register candidates
-/// @dev -4- setup election
-/// @dev -5- start voting session
-/// @dev -6- vote 
-/// @dev -7- end voting session
-/// @dev -8- compile votes
-/// @dev -9- make results public
-
-
-/// @author TeamB - Blockgames Internship 22
-/// @title A Voting Dapp
-
-=======
 /** 
 * @dev flow process
 * @dev -1- register address as stakeholders
@@ -42,7 +21,6 @@ import "./ZuriSchoolToken.sol";
 * @author TeamB - Blockgames Internship 22
 * @title A Voting Dapp
 */
->>>>>>> 236355efbb9c113fb4e666e1b9adf220b2047238
 contract ZuriSchool {
 
     constructor(address _tokenAddr) {
@@ -197,22 +175,9 @@ contract ZuriSchool {
             string _role,address[] stakeholderAddress
     ); 
 
-    /** @notice emit when a stakeholder is removed */
-    event StakeholderRemovedEvent (
-            address stakeholderAddress
-    ); 
-
-<<<<<<< HEAD
 
     /// @notice emit when role is appointed
     event ChangeChairman (address adder, address newChairman);   
-=======
-    /** @notice emit when role is removed */
-    event RemoveRole(address remover, address addr);
-
-    /** @notice emit when role is appointed */
-    event AssignedRole (address adder, address newRole);   
->>>>>>> 236355efbb9c113fb4e666e1b9adf220b2047238
      
     /** @notice emit when candidate has been registered */
     event CandidateRegisteredEvent( 
@@ -250,7 +215,6 @@ contract ZuriSchool {
         return compareStrings( _role,stakeholders[_address].role);
     }     
     
-<<<<<<< HEAD
     function changeChairman(address _stakeHolder) onlyChairman onlyWhenNotPaused public{
         require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role of chairman to a non stakeholder.");
         /// @notice change chairman role 
@@ -261,21 +225,6 @@ contract ZuriSchool {
         chairman = _stakeHolder;
         /// @notice emit event of new chairman
         emit ChangeChairman(msg.sender, _stakeHolder);
-=======
-    /**
-    * @notice assign roles to stakeholders
-    * @dev only chairman can assign roles
-    * @dev function cannot be called if contract is paused
-    */
-    function assignRole(string memory _role,address _stakeHolder) onlyChairman onlyWhenNotPaused public{
-        require(stakeholders[_stakeHolder].isRegistered ==true,"Can't assign a role to a non stakeholder.");
-        
-        /** @notice assign role to stakeholder */
-        stakeholders[_stakeHolder].role = _role;
-        
-        /** @notice emit event of new teacher */
-        emit AssignedRole(msg.sender, _stakeHolder);
->>>>>>> 236355efbb9c113fb4e666e1b9adf220b2047238
     }    
 
     /**

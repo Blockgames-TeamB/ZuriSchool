@@ -186,12 +186,6 @@ contract ZuriSchool {
         _;
     }
 
-    /** @notice modifier to check that only the director can call a function */
-    modifier onlyDirector() {
-        require(compareStrings(stakeholders[msg.sender].role, "director"),"Only Directors have access");
-        _;
-    }
-
 
     /// ---------------------------------------- EVENTS ----------------------------------------- ///
     /** @notice emit when a stakeholder is registered */

@@ -12,7 +12,7 @@ const fs = require("fs");
 const chalk = require("chalk");
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 const dotenv = require("dotenv");
-const defaultNetwork = "rinkeby";
+const defaultNetwork = "mumbai";
 
 dotenv.config();
 /**
@@ -50,6 +50,10 @@ module.exports = {
     },
     rinkeby: {
       url: process.env.RINKEBY_ALCHEMY_API_URL,
+      accounts: [process.env.METAMASK_KEY],
+    },
+    mumbai: {
+      url: process.env.POLYGON_ALCHEMY_API_URL,
       accounts: [process.env.METAMASK_KEY],
     },
 

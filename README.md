@@ -243,9 +243,11 @@ https://mumbai.polygonscan.com/address/0x1A45159517c58B0E5E0F7482807a642Ea4Ce71C
 
 This Project was created by the members of TeamB during the Blockgames Internship.
 
-<!-- <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=13Gt4morUWHd7QNLk4e6Om7itygJiCOSl" alt="teamresilient"/>
-</p> -->
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=17igBfE_fikN2_NGJ0am0IaK8V1IW3Q-8" alt="teamB"/>
+</p>
+
+
 
 #
 > ## Contributing to the project

@@ -1,6 +1,13 @@
 //SPDX-License-Identifier:MIT
 pragma solidity ^0.8.10;
-import "./ZuriSchoolToken.sol";
+
+interface ZuriSchoolToken{
+    /// @dev balanceOf returns the number of token owned by the given address
+    /// @param owner - address to fetch number of token for
+    /// @return Returns the number of tokens owned
+    function balanceOf(address owner) external view returns (uint256);
+    
+}
 
 
 /** 
@@ -26,8 +33,7 @@ contract ZuriSchool {
     constructor(address _tokenAddr) {
         zstoken = ZuriSchoolToken(_tokenAddr);
         
-        /** @notice mint zst to contract owner */
-        zstoken.mint(msg.sender, 10000 * decimals);
+       
         
         /** @notice add chairman is the deployer of the contract */
         chairman = msg.sender;
@@ -86,14 +92,12 @@ contract ZuriSchool {
     /** @notice CategoryTrack */
     uint256 count = 1;
 
-    /** @notice decimals */
-    uint256 decimals = 10**18;
+    
 
     /** @notice declare state variable _paused */
     bool public _paused;
 
-    /** @notice election queue */
-    Election[] public electionQueue;
+   
 
     /** @notice election array */
     Election[] public activeElectionArrays;
@@ -112,8 +116,7 @@ contract ZuriSchool {
     /** @notice mapping to check votes for a specific category */
     mapping(uint256=>mapping(uint256=>uint256)) public votesForCategory;
 
-    /** @notice mapping to check if a candidate is registered */
-    mapping(uint256=>bool) public activeCandidate;
+   
     
     /** @notice mapping for converting category string to uint */
     mapping(string => uint256) public Category;
@@ -123,6 +126,9 @@ contract ZuriSchool {
 
     /** @notice tracks the active election */
     mapping(string=>Election) public activeElections;
+
+ /** @notice tracks the index of active election */
+    mapping(string => uint) public activeModify;
   
 
     /// ------------------------------------- MODIFIER ------------------------------------------- ///
@@ -150,6 +156,15 @@ contract ZuriSchool {
         /** @notice check that sender is the chairman */
         require(msg.sender == chairman || compareStrings(stakeholders[msg.sender].role,"teacher"), 
         "Access granted to only the chairman or teacher");
+        _;
+    }
+
+    /// @notice modifier to check that only the chairman, teacher or director can call a function
+    modifier onlyGranted() {
+
+        /// @notice check that sender is the chairman
+        require ((msg.sender == chairman) || compareStrings(stakeholders[msg.sender].role,"teacher") || compareStrings(stakeholders[msg.sender].role,"director"), 
+        "Access granted to only the chairman, teacher or director");
         _;
     }
        
@@ -193,7 +208,7 @@ contract ZuriSchool {
     /** @notice emit when stakeholder has voted */
     event VotedEvent (
         address stakeholder,
-        uint candidateId
+        string category
     );
     
     /** @notice emit when votes have been counted */
@@ -221,7 +236,7 @@ contract ZuriSchool {
         stakeholders[_stakeHolder].role = "chairman";
         stakeholders[msg.sender].role = "director";
         stakeholders[msg.sender].votingPower= 3;
-        stakeholders[msg.sender].votingPower= 4;
+        stakeholders[_stakeHolder].votingPower= 4;
         chairman = _stakeHolder;
         /// @notice emit event of new chairman
         emit ChangeChairman(msg.sender, _stakeHolder);
@@ -232,7 +247,7 @@ contract ZuriSchool {
     * @dev only chairman and teacher can upload csv file of stakeholders
     * @dev function cannot be called if contract is paused
     */
-    function uploadStakeHolder(string memory _role,uint256 _amountOftoken,uint256 votingPower,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
+    function uploadStakeHolder(string memory _role,uint256 votingPower,address[] calldata _address) onlyAccess onlyWhenNotPaused  external {
         
         /// @notice loop through the list of students and upload
         require(
@@ -241,9 +256,8 @@ contract ZuriSchool {
         );
         
         for (uint i = 0; i < _address.length; i++) {
-                //mint 5 tokens to students,10 tokens to teachers and 20 to directors
-                zstoken.mint(_address[i],_amountOftoken*decimals);
-                stakeholders[_address[i]] = Stakeholder(_role, true, false, 0, votingPower );     
+                 if(stakeholders[_address[i]].isRegistered ==false)
+                {stakeholders[_address[i]] = Stakeholder(_role, true, false, 0, votingPower ); }    
         }
         
         /// @notice emit stakeholder registered event
@@ -262,19 +276,20 @@ contract ZuriSchool {
         require(Category[_category] != 0,"Category does not exist...");
         
         /** @dev initial state check */
-        if(candidatesCount == 0){
+        
             candidatesCount++;
-        }
+        
         
         /** @notice add to candidate map by passing in the candidateCount aka id */
         candidates[candidatesCount] = Candidate(candidatesCount, candidateName, Category[_category], 0 );
         
-        /** @notice check if candidate is active */
-        activeCandidate[candidatesCount] = true;
-        candidatesCount ++;
+        
+        
         
         /** @notice emit event when candidate is registered */
+        candidatesCount;
         emit CandidateRegisteredEvent(candidatesCount);
+
     }
 
     /** 
@@ -293,21 +308,19 @@ contract ZuriSchool {
         return _category;
     }
 
-    /** 
-    * @notice show all categories of offices available for election
-    * @dev function cannot be called if contract is paused
-    */
-    function showCategories() onlyWhenNotPaused public view returns(string[] memory){
-        return categories;
-    }
+   
+   
+///@notice function that return list of candidates
+    function getCandidates() public view  returns (Candidate[] memory) {
+        Candidate[] memory contestants = new Candidate[] (candidatesCount);
+        for(uint i=0; i < candidatesCount; i++){
+            Candidate storage candidate = candidates[i+1];
+            contestants[i] = candidate;
 
-    /** 
-    * @notice show all election queue
-    * @dev function cannot be called if contract is paused
-    */
-    function showQueue() onlyWhenNotPaused public view returns(Election[] memory){
-        return electionQueue;
+        }
+        return contestants;
     }
+   
 
     /**
     * @notice setup election
@@ -317,8 +330,10 @@ contract ZuriSchool {
     */
     function setUpElection (string memory _category,uint256[] memory _candidateID) public onlyAccess onlyWhenNotPaused returns(bool){
     
+    uint index = activeElectionArrays.length;
+    activeModify[_category] =index;
         /** @notice create a new election and add to election queue */
-        electionQueue.push(Election(
+        activeElectionArrays.push(Election(
             _category,
             _candidateID,
             false,
@@ -336,7 +351,7 @@ contract ZuriSchool {
     * @dev function cannot be called if contract is paused    
     */
     function clearElectionQueue() public onlyChairman onlyWhenNotPaused{
-        delete electionQueue;
+        delete activeElectionArrays;
     }
     
     /** 
@@ -346,19 +361,18 @@ contract ZuriSchool {
     */
     function startVotingSession(string memory _category) 
         public onlyChairman onlyWhenNotPaused {
-        for(uint256 i = 0;i<electionQueue.length;i++){
-            if(compareStrings(electionQueue[i].category,_category)){
+            require(activeModify[_category] >= 0, "no such category exist");
                 
                 /** @notice add election category to active elections */
-                activeElections[_category]=electionQueue[i];
+                uint index = activeModify[_category];
+         activeElections[_category]=activeElectionArrays[index];
+
+         /** @notice update the activeElectionArrays */
+         activeElectionArrays[index].VotingStarted=true;
 
                 /** @notice start voting session */
                 activeElections[_category].VotingStarted=true;
                 
-                /** @notice update the activeElectionArrays */
-                activeElectionArrays.push(electionQueue[i]);
-            }
-        }
 
         /** @ notice emit event when voting starts */
         emit VotingStartedEvent(_category,true);
@@ -373,6 +387,9 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         
+         //update the activeElectionArrays
+                uint addressEntityIndex = activeModify[_category];
+               activeElectionArrays[addressEntityIndex].VotingEnded =true;
         /** @ notice emit event when voting ends */
         emit VotingEndedEvent(_category,true);
     }
@@ -391,8 +408,7 @@ contract ZuriSchool {
         /** @notice require that the session for voting is not yet ended */
         require(activeElections[_category].VotingEnded ==false,"Voting has not commmenced for this Category");
         
-        /** @notice require that a candidate is registered/active */
-        require(activeCandidate[_candidateID]==true,"Candidate is not registered for this position.");
+       
     
         /// @notice check that a candidate is valid for a vote in a category
         // require(candidates[_candidateID].category == Category[_category],"Candidate is not Registered for this Office!");
@@ -402,7 +418,7 @@ contract ZuriSchool {
         stakeholders[msg.sender].hasVoted = true;
 
         /** @notice check that balance of voter is greater than zero.. 1 token per votes */
-        require(zstoken.balanceOf(msg.sender) >1*decimals,"YouR balance is currently not sufficient to vote. Not a stakeholder");
+        require(zstoken.balanceOf(msg.sender) >1*1e18,"YouR balance is currently not sufficient to vote. Not a stakeholder");
       
         /** @notice ensure that there are no duplicate votes recorded for a candidates category. */
         uint256 votes = votesForCategory[_candidateID][Category[_category]]+=stakeholders[msg.sender].votingPower;
@@ -413,7 +429,7 @@ contract ZuriSchool {
         * @notice emit event when a candidate is voted for
         * @dev emit person that voted and the candidate they voted for
         */
-        emit VotedEvent(msg.sender, _candidateID);
+        emit VotedEvent(msg.sender, _category);
 
         return (_category, _candidateID);
     }
@@ -425,6 +441,7 @@ contract ZuriSchool {
     */
     function getWinningCandidate(string memory _category) onlyAfterVotesCounted(_category) onlyWhenNotPaused public view
        returns (Candidate memory,uint256) {
+              require(activeElections[_category].isResultPublic==true,"Result is not yet public");
        return (categoryWinner[_category],activeElections[_category].totalVotesCasted);
     }   
     
@@ -469,8 +486,10 @@ contract ZuriSchool {
         } 
         
         /** @notice update Election status */
+         activeElections[_position].totalVotesCasted= totalVotes;
         activeElections[_position].VotesCounted=true;
-        
+         uint addressEntityIndex = activeModify[_position];
+               activeElectionArrays[addressEntityIndex].VotesCounted =true;
         /** @notice update winner for the category */
         categoryWinner[_position]=candidates[winnerId];
         return (totalVotes, winningVoteCount, items); 
@@ -488,10 +507,14 @@ contract ZuriSchool {
     * @notice only the chairman and teacher can make the election results public
     * @dev function cannot be called if contract is paused
     */
-    function makeResultPublic(string memory _category) public onlyAccess onlyWhenNotPaused returns(Candidate memory,string memory) {
+    function makeResultPublic(string memory _category) public onlyGranted onlyWhenNotPaused returns(Candidate memory,string memory) {
 
         /** @notice require that the category voting session is over before compiling votes */
         require(activeElections[_category].VotesCounted == true, "This session is still active, voting has not yet been counted");
+
+         uint addressEntityIndex = activeModify[_category];
+        
+        activeElectionArrays[addressEntityIndex].isResultPublic =true;
         activeElections[_category].isResultPublic = true;
         return (categoryWinner[_category],_category);
         } 

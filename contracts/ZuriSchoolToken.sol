@@ -8,13 +8,54 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 * @title ZuriSchoolToken minting contract
 */
 contract ZuriSchoolToken is ERC20 {
-    constructor() ERC20("ZuriSchoolToken", "ZST") {}
+    address public chairman;
+    constructor() ERC20("ZuriSchoolToken", "ZST") {
+        chairman = msg.sender;
+   _mint(msg.sender,40*1e18);
+    }
 
+ mapping(address => bool) public teacher;
+
+    modifier onlyAccess() {
+
+        /// @notice check that sender is the chairman
+        require(msg.sender == chairman || teacher[msg.sender] == true, 
+        "Access granted to only the chairman or teacher");
+        _;
+    }
+
+     function compareStrings(string memory _str, string memory str) private pure returns (bool) {
+        return keccak256(abi.encodePacked(_str)) == keccak256(abi.encodePacked(str));
+    }
     /** 
     * @notice mints specified amount of tokens to an address.
     * @dev callable only by owner of contract
     */
-    function mint(address _to, uint256 _amount) public {
+    function mint(address _to, uint256 _amount) public onlyAccess{
         _mint(_to, _amount);
+    }
+
+    function mintToStakeholder(uint256 _amountOftoken, string calldata _role, address[] calldata _address) external  {
+        
+        /// @notice loop through the list of students and upload
+        require(
+            _address.length >0,
+            "Upload array of addresses"
+        );
+        
+        for (uint i = 0; i < _address.length; i++) {
+                //mint 5 tokens to students,10 tokens to teachers and 20 to directors
+             if(teacher[_address[i]] == false)
+                {
+                    _mint(_address[i],_amountOftoken*1e18);
+
+                  if(compareStrings(_role,"teacher"))
+                 {
+                     teacher[_address[i]]=true; }  
+                     }
+        
+            
+        }
+       
     }
 }

@@ -5,12 +5,17 @@
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts": "^4.5.0",
+    "@tenderly/hardhat-tenderly": "^1.0.13",
     "chai": "^4.3.6",
     "dotenv": "^16.0.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.4",
     "hardhat": "^2.9.3",
     "hardhat-deploy": "^0.11.4",
+<<<<<<< HEAD
+=======
+    "hardhat-gas-reporter": "^1.0.8",
+>>>>>>> 5d30a4e470edfa73951c9383ac75ec3ddc0a846d
     "web3": "^1.7.3"
   },
   "dependencies": {

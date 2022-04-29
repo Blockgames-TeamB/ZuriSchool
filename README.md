@@ -16,8 +16,7 @@
   - [Verify](#verify)
 - [Setup the Frontend](#setup-the-frontend)
   - [Install Dependencies](#install-dependencies)
-  - [Start Server](#start-server)
-  - [Build the Frontend](#build-the-frontend)
+  - [Steps to host the live site on Vercel](#steps-to-host-the-live-site-on-vercel)
 - [Testing the Smartcontract](#testing-the-smartcontract)
 - [ZuriSchool Contract Address](#zurischool-contract-address)
 - [Live Link](#live-link)
@@ -95,7 +94,7 @@ $ npm i -D hardhat
 
 $ npm install
 
-$ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@nomiclabs/hardhat-ethers" "ethers" "web3" "@nomiclabs/hardhat-web3" "@nomiclabs/hardhat-etherscan" "@openzeppelin/contracts" "dotenv"
+$ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@nomiclabs/hardhat-ethers" "ethers" "web3" "@nomiclabs/hardhat-web3" "@nomiclabs/hardhat-etherscan" "@openzeppelin/contracts" "dotenv" "@tenderly/hardhat-tenderly" "hardhat-gas-reporter" "hardhat-deploy"
 ```
 > ### Env Setup
  Next create a `.env` file by using the sample.env. Retrieve your information from the relevant sites and input the information where needed in the `.env` file.
@@ -112,25 +111,26 @@ $ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@
 
 #
 `To retrieve your alchemy key.`
-- Login to your account on https://www.alchemy.com/
-- Once youre redirected to your [dashboard](https://dashboard.alchemyapi.io/), click on create app.
+- Login to your account on [alchemy](https://www.alchemy.com/)
+- Once you're redirected to your [dashboard](https://dashboard.alchemyapi.io/), click on create app.
 - Fill in the relevant details especially the chain and network
 - Once the app has been created, click on view key.
 - Copy the HTTP and place it in the .env file.
 
 <p align="center" width="100%">
   <img src="https://drive.google.com/uc?export=view&id=1vPvT5LJRJy6B8hSi_3mPo16wC4u6MnEK" alt="alchemy"/>
+  
 </p>
 
 #
-`To retrieve your etherscan key.`
-- Login to [etherscan](https://etherscan.io/) and hover over the dropdown arrow for your profile on the navbar.
+`To retrieve your polygonscan key.`
+- Login to [polygonscan](https://polygonscan.com/) and hover over the dropdown arrow for your profile on the navbar.
 - Click on API keys and add to create a new project (optional step).
 - Once the project has been created, click on the copy button to copy the API key.
 - Paste it in the .env file
 
 <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1Gq-hPuwjwb3TOCH2dqUA93VxfyrbUDN6" alt="etherscan key"/>
+  <img src="https://drive.google.com/uc?export=view&id=1x1h2DqgWNGFzx47sNAVY0uUk_WaJx3wi" alt="polygon key"/>
 </p>
 
 #
@@ -157,14 +157,15 @@ $ npx hardhat compile
 > ### Deploy
 - To deploy the smartcontract:
 ```
-$ npx hardhat run scripts/deploy.js --network rinkeby
+$ npx hardhat run scripts/deploy.js --network mumbai
 ```
 #
 > ### Verify
 - To verify the smartcontract:
 ```
-$ npx hardhat verify __________________ --network rinkeby
+$ npx hardhat verify 0xD6c7Bc7089DBe4DC6D493E35eaC3dAf5b18FC04d 0xC291B856723080177f983CB32C275D1e56f91841 --network mumbai
 ```
+- Note for verificition, the first address is the ZuriSchoolToken address, while the second is the ZuriSchool address.
 
 #
 > ## Setup the Frontend
@@ -178,20 +179,25 @@ $ cd frontend
 
 $ npm install
 
-$ npm install react-scripts@latest
+$ npm run dev
 ```
-#
-> ### Start Server
-- Start the server on localhost
-```
-$ npm run start
-```
-#
-> ### Build the Frontend
-- Create an optimized production build, which can be hosted on sites like Heroku, Netlify, Surge etc.
-```
-$ npm run build
-```
+> ### Steps to host the live site on Vercel
+- Create an account on [vercel](https://vercel.com/) and authorize your [GitHub](https://github.com/Blockgames-TeamB) account.
+
+- Once you're redirected to the Dashboard, click on the drop down menu and select `Add GitHub Org or Account`.
+
+- In the pop-up window, select the install option.
+
+- Once installation is completed, return to the dashboard and click `new project`.
+
+- Select the TeamB organization and select the zurischool repo to import the project.
+
+- Enter the relevant details and click `Deploy`.
+
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=1LB_g7gQyeFogizQaGCBNi85a1kXp3tYH" alt="site"/>
+</p>
+
 #
 > ## Testing the Smartcontract
 
@@ -219,27 +225,31 @@ $ npx hardhat coverage --network localhost --show-stack-traces
 ```
 #
 
-<!-- <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1tMhIUrDVPcIsMxTd4FAzapB04_R93Rcc" alt="coverage tests"/>
-</p> -->
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=16zXW2QHBBinyC0adq1Cd41YUD1grjR1X" alt="coverage tests"/>
+</p>
+
 
 #
 > ## ZuriSchool Contract Address
 
+- https://mumbai.polygonscan.com/address/0x1A45159517c58B0E5E0F7482807a642Ea4Ce71CF#code
+# 
 
-#  
+
+
 > ## Live Link
   
-  
+- https://zuri-school.vercel.app/
 #
 
 > ## Contributors
 
 This Project was created by the members of TeamB during the Blockgames Internship.
 
-<!-- <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=13Gt4morUWHd7QNLk4e6Om7itygJiCOSl" alt="teamresilient"/>
-</p> -->
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=17igBfE_fikN2_NGJ0am0IaK8V1IW3Q-8" alt="teamB"/>
+</p>
 
 #
 > ## Contributing to the project
@@ -255,4 +265,4 @@ Before adding a pull request, please note:
 
 All **`suggestions`** are welcome!
 #
-> ###### README Created by `Pauline Banye` for TeamB
+> ##### README Created by `pauline-banye` for TeamB

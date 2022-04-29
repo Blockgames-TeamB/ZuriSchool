@@ -186,7 +186,9 @@ const updateChairman = async(addr) => {
   notify("changing chairman in zurischool...");
  try {
    const result =await contract.changeChairman(addr);
-   
+   if(result){
+    await changeTokenChairman(addr)
+  }
    notify("changing chairman in zurischool...");
 
   return result
@@ -405,8 +407,7 @@ export const ConnectProvider = ({ children }) =>{
           candidateList,
           mint,
           updateChairman,
-          voteConsensus,
-          changeTokenChairman
+          voteConsensus
         }}
       >
         {children}

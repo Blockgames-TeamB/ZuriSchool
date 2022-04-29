@@ -29,7 +29,7 @@ function AdminPortal() {
   const [showStudModal, setshowStudModal] = useState(false);
   const [showDirModal, setshowDirModal] = useState(false);
   const [showTchModal, setshowTchModal] = useState(false);
-  const [showChrModal, setshowChrModal] = useState(false);
+  
 
   const [showSetElectModal, setshowSetElectModal] = useState(false);
   const [showElectCategoryModal, setshowElectCategoryModal] = useState(false);
@@ -42,9 +42,24 @@ function AdminPortal() {
 
   const [activeElection, setactiveElection] = useState([]);
   const [CategoryList, setCategoryList] = useState("");
-  const [chairman, setChairman] = useState("");
+ 
   
+  const [category_check_list, setCategoryCheckList] = useState([]);
 
+  const categoryCheckboxFilterHandler = e => {
+      if (e.target.checked == true){
+          setCategoryCheckList([...category_check_list, e.target.value]);
+      }else{
+          let check_list = [];
+          category_check_list.map(check => {
+              if (check != e.target.value){
+                  check_list.push(check);
+              }
+          });
+          setCategoryCheckList(check_list);
+      }
+  };
+  
   const notify = (str) => toast(str);
   // a boolean state to allow that only one of upload file button and upload button show at a time
 
@@ -100,9 +115,11 @@ function AdminPortal() {
 
   const setupElect = async (e) => {
     e.preventDefault();
+    notify("setting up election");
     const arr = candidateID.split(",");
 
-    await setupElection(CategoryList, arr);
+    await setupElection(CategoryList, arr, category_check_list);
+    notify("election set");
   };
   const start = async (_category) => {
     await startVoting(_category);
@@ -120,14 +137,7 @@ function AdminPortal() {
     setcandidateName("");
   };
   
-  const handleChairman = async (e) => {
-    e.preventDefault();
-    notify("Updating Chairman");
-
-     await updateChairman(chairman);
-    setChairman("");
-    
-  };
+ 
   const handleCategory = async (e) => {
     e.preventDefault();
     notify("Adding Category");
@@ -459,13 +469,7 @@ function AdminPortal() {
                           {" "}
                           Register Board of Directors
                         </div>
-                        <div
-                          class="bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded mt-1 border-b border-gray-100 dark:border-gray-900 cursor-pointer"
-                          onClick={() => setshowChrModal(true)}
-                        >
-                          {" "}
-                          Change Chairman
-                        </div>
+                        
                       </div>
                     </div>
                   </div>
@@ -723,9 +727,9 @@ function AdminPortal() {
                               </h3>
 
                               <div>
-                                <label
-                                  for="candidates"
-                                  class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                              <label
+                                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                  for="grid-state"
                                 >
                                   Candidates IDs:
                                 </label>
@@ -734,7 +738,7 @@ function AdminPortal() {
                                   name="candidates"
                                   id="candidates"
                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                  placeholder="name@company.com"
+                                  placeholder=""
                                   required
                                   value={candidateID}
                                   onChange={(e) => {
@@ -743,7 +747,7 @@ function AdminPortal() {
                                 />
                               </div>
 
-                              <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                              <div>
                                 <label
                                   class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
                                   for="grid-state"
@@ -757,7 +761,7 @@ function AdminPortal() {
                                     name="candidates"
                                     id="candidates"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="name@company.com"
+                                    placeholder=""
                                     required
                                     value={CategoryList}
                                     onChange={(e) => {
@@ -766,6 +770,37 @@ function AdminPortal() {
                                   />
                                 </div>
                               </div>
+<div>
+<label
+                                  class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                                  for="grid-state"
+                                >Participating Stakeholders</label>
+                              <div class=" flex justify-between w-full md:w-1/3 px-3 mb-6 md:mb-0">
+
+                                <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain  mr-2 cursor-pointer" type="checkbox" value="chairman"  onChange={e => categoryCheckboxFilterHandler(e)} />
+      <label class=" text-gray-800 mr-2">
+        Chairman{" "}
+      </label>
+      </div>
+    
+    <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="director"   onChange={e => categoryCheckboxFilterHandler(e)}/>
+      <label class=" text-gray-800 mr-2"  >
+        Directors
+      </label></div>
+    <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="teacher"   onChange={e => categoryCheckboxFilterHandler(e)} />
+      <label class="text-gray-800 mr-2" >
+        Teachers
+      </label></div>
+    <div class="form-check flex justify-around">
+      <input class="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="checkbox" value="student"  onChange={e => categoryCheckboxFilterHandler(e)}   />
+      <label class="text-gray-800 mr-2" >
+        Students
+      </label></div>
+    </div>
+    </div>
                               <button
                                 class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                                 onClick={(e) => setupElect(e)}
@@ -862,75 +897,7 @@ function AdminPortal() {
                   </>
                 ) : null}
 
-                {/* Change Chairman Modal */}
-                {showChrModal ? (
-                  <>
-                    <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-                      <div className="relative w-auto my-6 mx-auto max-w-3xl">
-                        {/*content*/}
-                        <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                          {/*header*/}
-                          <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
-                            <h3 className="text-3xl font-semibold">
-                              Update Chairmanship
-                            </h3>
-                          </div>
-                          {/*body*/}
-                          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                            <div class="flex justify-end p-2"></div>
-                            <form
-                              class="px-6 pb-4 space-y-6 lg:px-8 sm:pb-6 xl:pb-8"
-                              action="#"
-                            >
-                              <h3 class="text-xl font-medium text-gray-900 dark:text-white">
-                                Type in the Address of the New Chairman
-                              </h3>
-
-                              <div>
-                                <label
-                                  for="chairman"
-                                  class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                                >
-                                  Address:
-                                </label>
-                                <input
-                                  type="text"
-                                  name="candidates"
-                                  id="candidates"
-                                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
-                                  placeholder=""
-                                  required
-                                  value={chairman}
-                                  onChange={(e) =>
-                                    setChairman(e.target.value)
-                                  }
-                                />
-                              </div>
-                              <button
-                                type="submit"
-                                class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                                onClick={(e) => handleChairman(e)}
-                              >
-                                Change Chairman
-                              </button>
-                            </form>
-                          </div>
-                          {/*footer*/}
-                          <div className="flex items-center justify-center p-6 border-t border-solid border-slate-200 rounded-b">
-                            <button
-                              className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                              type="button"
-                              onClick={() => setshowChrModal(false)}
-                            >
-                              Close
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-                  </>
-                ) : null}
+              
 
                 {/* Register Candidate Modal */}
                 {showRegCandidateModal ? (

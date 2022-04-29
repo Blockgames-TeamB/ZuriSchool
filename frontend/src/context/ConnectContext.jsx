@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
-
+import { toast } from "react-toastify";
 import { contractABI, contractAddress } from "../utils/constants";
 import { contractABIToken, contractAddressToken } from "../utils/tokenConstants";
 
@@ -78,6 +78,7 @@ const clear = async() => {
  
  }
 }
+const notify = (str) => toast(str);
 
 const startVoting = async(_category) => {
   const contract = createEthereumContract();
@@ -217,10 +218,10 @@ const Compile = async(_category) => {
 }
 const Voting = async(_category, id) => {
   const contract = createEthereumContract();
-  
+  notify("Voting...");
  try {
    const result =await contract.vote(_category, id, {gasLimit:300000});
-  
+   notify("Voting is successful for " + _category );
   return result
   }
  catch(error){

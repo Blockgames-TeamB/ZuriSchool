@@ -6,11 +6,18 @@ require("hardhat-gas-reporter");
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
 require('solidity-coverage');
+<<<<<<< HEAD
+require("@nomiclabs/hardhat-ethers");
+require("hardhat-deploy");
+// require("HardhatUserConfig")
+
+=======
 
 const { utils } = require("ethers");
 const fs = require("fs");
 const chalk = require("chalk");
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
+>>>>>>> 5d30a4e470edfa73951c9383ac75ec3ddc0a846d
 const dotenv = require("dotenv");
 const defaultNetwork = "mumbai";
 
@@ -89,6 +96,17 @@ module.exports = {
     },
   },
   etherscan: {
+<<<<<<< HEAD
+    apiKey: process.env.ETHERSCAN_KEY,
+  },
+  plugins:["solidity-coverage"],
+  namedAccounts: {
+    deployer: {
+      default: 0, // here this will by default take the first account as deployer
+    },
+}
+ }
+=======
     apiKey: {
     rinkeby: process.env.ETHERSCAN_KEY,
   }
@@ -372,3 +390,4 @@ task("send", "Send ETH")
     debug(JSON.stringify(txRequest, null, 2));
     return send(fromSigner, txRequest);
   });
+>>>>>>> 5d30a4e470edfa73951c9383ac75ec3ddc0a846d

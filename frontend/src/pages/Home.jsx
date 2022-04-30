@@ -2,11 +2,11 @@ import React, { useRef } from 'react';
 
 import Header from '../partials/Header';
 import HeroHome from '../partials/HeroHome';
-// import FeaturesHome from '../partials/Features';
-// import FeaturesBlocks from '../partials/FeaturesBlocks';
-// import Testimonials from '../partials/Testimonials';
-// import Newsletter from '../partials/Newsletter';
-// import Footer from '../partials/Footer';
+import FeaturesHome from '../partials/Features';
+import FeaturesBlocks from '../partials/FeaturesBlocks';
+import Testimonials from '../partials/Testimonials';
+import Newsletter from '../partials/Newsletter';
+import Footer from '../partials/Footer';
 import Sidebar from "../components/Sidebar"
 function Home() {
   
@@ -30,15 +30,15 @@ function Home() {
 
         {/*  Page sections */}
         <HeroHome reference={el1} click={()=> scrollToDiv(el2)} />
-        {/* <FeaturesHome reference={el2}  /> */}
-        {/* <FeaturesBlocks />
+        <FeaturesHome reference={el2}  />
+        <FeaturesBlocks />
         <Testimonials />
-        <Newsletter /> */}
+        <Newsletter />
 
       </main>
 
       {/*  Site footer */}
-      {/* <Footer /> */}
+      <Footer />
 
     </div></div>
   );

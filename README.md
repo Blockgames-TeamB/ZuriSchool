@@ -233,7 +233,7 @@ $ npx hardhat coverage --network localhost --show-stack-traces
 #
 > ## ZuriSchool Contract Address
 
-- https://mumbai.polygonscan.com/address/0x718d426cC87642826462dF80D976f6bc3E0f16B9#code
+- https://mumbai.polygonscan.com/address/0x1A45159517c58B0E5E0F7482807a642Ea4Ce71CF#code
 # 
 
 

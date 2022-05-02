@@ -1,8 +1,12 @@
 # ZuriSchool Dapp
 
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=1LB_g7gQyeFogizQaGCBNi85a1kXp3tYH" alt="site"/>
+</p>
+
 > ## Table of contents
 - [Overview](#overview)
-- [Project Features](#project-features)
+- [Core Features Implemented](#core-features-implemented)
 - [Technologies](#technologies)
 - [Repo Setup](#repo-setup)
 - [Requirements](#requirements)
@@ -30,17 +34,50 @@ Zuri as an organization needs to setup an election for leadership position in it
 
 
 #
-> ## Project Features
+> ## Core Features Implemented
 
-- Stakeholders should be able to vote.
+`Deployment on a faster network`
+- Deployment on polygon for speed, gas fees & optimization.
 
-- Stakeholders should have access control.
+`Upload Stakeholders & mint`
 
-- Only the chairman and teachers can setup and compile results.
+- Batch upload stakeholder addresses and assign each address with a role on upload.
+- A certain amount of tokens are minted during upload depending on the role of the stakeholder.
+- Ability to restrict the voting power of stakeholders to only those who have a token.
+- The tokens represent the voting weight with the chairman having the highest voting weight of 4 and the student having the least voting weight of 1.
 
-- Only the chairman can enable and disable the vote.
 
-- Students can only see results after they have been made public
+
+`Setup elections and compile votes`
+- Restrict the power to set up and compile votes to only the chairman and teachers.
+- Ability to set up multiple elections at the same time.
+- Restrict the ability for anyone who isn't a stakeholder to vote.
+- Ability for eligible stakeholders to vote for candidates in different election categories simultaneously.
+- Ability to limit stakeholders from voting in specific elections, for example students can't vote in an election for board of directors.
+- Ability to register candidates to contest for specific roles.
+- Restrict stakeholders from voting multiple times for different candidates in the same category.
+- Check to prevent users from voting for a candidate that doesn't exist for that category.
+- Ability for stakeholders to view history of past elections.
+- Ability for the chairman to view the election queue.
+- Restrict the start and end of a voting session to only the chairman.
+- Ability to compile votes for different election categories.
+- Ability for the chairman, teachers and directors to make the election results public.
+- Restrict the ability of the students to view the election results until it is made public.
+
+`Remove Chairman`
+- Ability to change the current chairman based on a consensus of above 75% vote from the board of directors.
+
+`Security`
+- Ability for the chairman to pause and unpause the contract for security reasons. 
+- If there's a vulnerability or a security breach, the contract functionality can be paused so the vulnerability can't be abused until the problem has been resolved.
+
+`Test Coverage`
+- Unit testing ensures that all the codes meet the quality standards and the functions return the expected output.
+- Test coverage shows us the extent of how much of our codes are covered by tests. We ideally aim for 100% coverage.
+
+`Natspec commenting`
+- This documentation provides information about the codebase and their implementation for both technical and non technical people. 
+
 
 </p>
 
@@ -73,7 +110,7 @@ Change directory to the cloned repo and set the original ZuriSchool repository a
 - Hardhat
 - Alchemy key
 - Metamask key
-- Etherscan.io API Url
+- Polygonscan.com API Url
 - Node JS
 #
 > ## Setup the Project
@@ -140,7 +177,7 @@ $ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@
 Below is the setup for the hardhat.config.json
 
 <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1Wmc2o2DnF5K6Q5y0CTCjVUfUIoLVm2ei" alt="hardhat"/>
+  <img src="https://drive.google.com/uc?export=view&id=1-vWH8_zI8DTzvnRM4gcwX2HWsHuCd0O0" alt="hardhat"/>
 </p>
 
 #
@@ -194,9 +231,6 @@ $ npm run dev
 
 - Enter the relevant details and click `Deploy`.
 
-<p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1LB_g7gQyeFogizQaGCBNi85a1kXp3tYH" alt="site"/>
-</p>
 
 #
 > ## Testing the Smartcontract

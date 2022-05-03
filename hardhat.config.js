@@ -12,19 +12,11 @@ const fs = require("fs");
 const chalk = require("chalk");
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 const dotenv = require("dotenv");
-const defaultNetwork = "rinkeby";
+// const defaultNetwork = "mumbai";
+const defaultNetwork = "mumbai";
 
 dotenv.config();
-/**
-      📡 This is where you configure your deploy configuration for 🏗 scaffold-eth
-      check out `packages/scripts/deploy.js` to customize your deployment
-      out of the box it will auto deploy anything in the `contracts` folder and named *.sol
-      plus it will use *.args for constructor args
-*/
-//
-// Select the network you want to deploy to here:
-//
-// const defaultNetwork = "localhost";
+
 const mainnetGwei = 21;
 function mnemonic() {
   try {
@@ -37,7 +29,7 @@ function mnemonic() {
     }
   }
   return "";
-}
+} 
 module.exports = {
   defaultNetwork,
   gasReporter: {
@@ -50,6 +42,10 @@ module.exports = {
     },
     rinkeby: {
       url: process.env.RINKEBY_ALCHEMY_API_URL,
+      accounts: [process.env.METAMASK_KEY],
+    },
+    mumbai: {
+      url: process.env.POLYGON_ALCHEMY_API_URL,
       accounts: [process.env.METAMASK_KEY],
     },
 

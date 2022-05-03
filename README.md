@@ -1,8 +1,12 @@
 # ZuriSchool Dapp
 
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=1LB_g7gQyeFogizQaGCBNi85a1kXp3tYH" alt="site"/>
+</p>
+
 > ## Table of contents
 - [Overview](#overview)
-- [Project Features](#project-features)
+- [Core Features Implemented](#core-features-implemented)
 - [Technologies](#technologies)
 - [Repo Setup](#repo-setup)
 - [Requirements](#requirements)
@@ -16,8 +20,7 @@
   - [Verify](#verify)
 - [Setup the Frontend](#setup-the-frontend)
   - [Install Dependencies](#install-dependencies)
-  - [Start Server](#start-server)
-  - [Build the Frontend](#build-the-frontend)
+  - [Steps to host the live site on Vercel](#steps-to-host-the-live-site-on-vercel)
 - [Testing the Smartcontract](#testing-the-smartcontract)
 - [ZuriSchool Contract Address](#zurischool-contract-address)
 - [Live Link](#live-link)
@@ -31,17 +34,50 @@ Zuri as an organization needs to setup an election for leadership position in it
 
 
 #
-> ## Project Features
+> ## Core Features Implemented
 
-- Stakeholders should be able to vote.
+`Deployment on a faster network`
+- Deployment on polygon for speed, gas fees & optimization.
 
-- Stakeholders should have access control.
+`Upload Stakeholders & mint`
 
-- Only the chairman and teachers can setup and compile results.
+- Batch upload stakeholder addresses and assign each address with a role on upload.
+- A certain amount of tokens are minted during upload depending on the role of the stakeholder.
+- Ability to restrict the voting power of stakeholders to only those who have a token.
+- The tokens represent the voting weight with the chairman having the highest voting weight of 4 and the student having the least voting weight of 1.
 
-- Only the chairman can enable and disable the vote.
 
-- Students can only see results after they have been made public
+
+`Setup elections and compile votes`
+- Restrict the power to set up and compile votes to only the chairman and teachers.
+- Ability to set up multiple elections at the same time.
+- Restrict the ability for anyone who isn't a stakeholder to vote.
+- Ability for eligible stakeholders to vote for candidates in different election categories simultaneously.
+- Ability to limit stakeholders from voting in specific elections, for example students can't vote in an election for board of directors.
+- Ability to register candidates to contest for specific roles.
+- Restrict stakeholders from voting multiple times for different candidates in the same category.
+- Check to prevent users from voting for a candidate that doesn't exist for that category.
+- Ability for stakeholders to view history of past elections.
+- Ability for the chairman to view the election queue.
+- Restrict the start and end of a voting session to only the chairman.
+- Ability to compile votes for different election categories.
+- Ability for the chairman, teachers and directors to make the election results public.
+- Restrict the ability of the students to view the election results until it is made public.
+
+`Remove Chairman`
+- Ability to change the current chairman based on a consensus of above 75% vote from the board of directors.
+
+`Security`
+- Ability for the chairman to pause and unpause the contract for security reasons. 
+- If there's a vulnerability or a security breach, the contract functionality can be paused so the vulnerability can't be abused until the problem has been resolved.
+
+`Test Coverage`
+- Unit testing ensures that all the codes meet the quality standards and the functions return the expected output.
+- Test coverage shows us the extent of how much of our codes are covered by tests. We ideally aim for 100% coverage.
+
+`Natspec commenting`
+- This documentation provides information about the codebase and their implementation for both technical and non technical people. 
+
 
 </p>
 
@@ -74,7 +110,7 @@ Change directory to the cloned repo and set the original ZuriSchool repository a
 - Hardhat
 - Alchemy key
 - Metamask key
-- Etherscan.io API Url
+- Polygonscan.com API Url
 - Node JS
 #
 > ## Setup the Project
@@ -112,25 +148,26 @@ $ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@
 
 #
 `To retrieve your alchemy key.`
-- Login to your account on https://www.alchemy.com/
-- Once youre redirected to your [dashboard](https://dashboard.alchemyapi.io/), click on create app.
+- Login to your account on [alchemy](https://www.alchemy.com/)
+- Once you're redirected to your [dashboard](https://dashboard.alchemyapi.io/), click on create app.
 - Fill in the relevant details especially the chain and network
 - Once the app has been created, click on view key.
 - Copy the HTTP and place it in the .env file.
 
 <p align="center" width="100%">
   <img src="https://drive.google.com/uc?export=view&id=1vPvT5LJRJy6B8hSi_3mPo16wC4u6MnEK" alt="alchemy"/>
+  
 </p>
 
 #
-`To retrieve your etherscan key.`
-- Login to [etherscan](https://etherscan.io/) and hover over the dropdown arrow for your profile on the navbar.
+`To retrieve your polygonscan key.`
+- Login to [polygonscan](https://polygonscan.com/) and hover over the dropdown arrow for your profile on the navbar.
 - Click on API keys and add to create a new project (optional step).
 - Once the project has been created, click on the copy button to copy the API key.
 - Paste it in the .env file
 
 <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1Gq-hPuwjwb3TOCH2dqUA93VxfyrbUDN6" alt="etherscan key"/>
+  <img src="https://drive.google.com/uc?export=view&id=1x1h2DqgWNGFzx47sNAVY0uUk_WaJx3wi" alt="polygon key"/>
 </p>
 
 #
@@ -140,7 +177,7 @@ $ npm install --save-dev "@nomiclabs/hardhat-waffle" "ethereum-waffle" "chai" "@
 Below is the setup for the hardhat.config.json
 
 <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=1Wmc2o2DnF5K6Q5y0CTCjVUfUIoLVm2ei" alt="hardhat"/>
+  <img src="https://drive.google.com/uc?export=view&id=1-vWH8_zI8DTzvnRM4gcwX2HWsHuCd0O0" alt="hardhat"/>
 </p>
 
 #
@@ -157,16 +194,15 @@ $ npx hardhat compile
 > ### Deploy
 - To deploy the smartcontract:
 ```
-$ npx hardhat run scripts/deploy.js --network rinkeby
+$ npx hardhat run scripts/deploy.js --network mumbai
 ```
 #
 > ### Verify
 - To verify the smartcontract:
 ```
-$ npx hardhat verify 0xD6c7Bc7089DBe4DC6D493E35eaC3dAf5b18FC04d 0xC291B856723080177f983CB32C275D1e56f91841 --network rinkeby
+$ npx hardhat verify 0xD6c7Bc7089DBe4DC6D493E35eaC3dAf5b18FC04d 0xC291B856723080177f983CB32C275D1e56f91841 --network mumbai
 ```
 - Note for verificition, the first address is the ZuriSchoolToken address, while the second is the ZuriSchool address.
-
 
 #
 > ## Setup the Frontend
@@ -180,20 +216,22 @@ $ cd frontend
 
 $ npm install
 
-$ npm install react-scripts@latest
+$ npm run dev
 ```
-#
-> ### Start Server
-- Start the server on localhost
-```
-$ npm run start
-```
-#
-> ### Build the Frontend
-- Create an optimized production build, which can be hosted on sites like Heroku, Netlify, Surge etc.
-```
-$ npm run build
-```
+> ### Steps to host the live site on Vercel
+- Create an account on [vercel](https://vercel.com/) and authorize your [GitHub](https://github.com/Blockgames-TeamB) account.
+
+- Once you're redirected to the Dashboard, click on the drop down menu and select `Add GitHub Org or Account`.
+
+- In the pop-up window, select the install option.
+
+- Once installation is completed, return to the dashboard and click `new project`.
+
+- Select the TeamB organization and select the zurischool repo to import the project.
+
+- Enter the relevant details and click `Deploy`.
+
+
 #
 > ## Testing the Smartcontract
 
@@ -229,23 +267,23 @@ $ npx hardhat coverage --network localhost --show-stack-traces
 #
 > ## ZuriSchool Contract Address
 
-https://mumbai.polygonscan.com/address/0x1A45159517c58B0E5E0F7482807a642Ea4Ce71CF#code
+- https://mumbai.polygonscan.com/address/0x1A45159517c58B0E5E0F7482807a642Ea4Ce71CF#code
 # 
 
 
 
 > ## Live Link
   
-  zurivoting.surge.sh
+- https://zuri-school.vercel.app/
 #
 
 > ## Contributors
 
 This Project was created by the members of TeamB during the Blockgames Internship.
 
-<!-- <p align="center" width="100%">
-  <img src="https://drive.google.com/uc?export=view&id=13Gt4morUWHd7QNLk4e6Om7itygJiCOSl" alt="teamresilient"/>
-</p> -->
+<p align="center" width="100%">
+  <img src="https://drive.google.com/uc?export=view&id=17igBfE_fikN2_NGJ0am0IaK8V1IW3Q-8" alt="teamB"/>
+</p>
 
 #
 > ## Contributing to the project
@@ -261,4 +299,4 @@ Before adding a pull request, please note:
 
 All **`suggestions`** are welcome!
 #
-> ###### README Created by `Pauline Banye` for TeamB
+> ##### README Created by `pauline-banye` for TeamB

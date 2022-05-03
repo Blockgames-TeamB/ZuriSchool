@@ -1,5 +1,5 @@
 import React,{useContext, useEffect, useState} from 'react';
-import { Link } from 'react-router-dom';
+
 
 
 import Header from '../partials/Header';
@@ -75,7 +75,7 @@ fetchCandidate()
 
             
 
-            if(!election.VotingEnded) {
+            if(election.VotingStarted && !election.VotingEnded) {
               return (
                 <div class="md:col-span-2 xl:col-span-3" key={key} >
               <div class="rounded bg-gray-200 dark:bg-gray-800 p-3">

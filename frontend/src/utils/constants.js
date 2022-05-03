@@ -1,4 +1,4 @@
 import abi from "./ZuriSchool.json";
 
-export const contractAddress = "0x1A45159517c58B0E5E0F7482807a642Ea4Ce71CF";
+export const contractAddress = "0x718d426cC87642826462dF80D976f6bc3E0f16B9";
 export const contractABI = abi.abi;

@@ -64,6 +64,11 @@ describe("ZuriToken and ZuriVoting Contract Deployment...", function(){
         expect(bal).to.be.equal(10)
         console.log("passed..");
     });
+    it("Should not mint tokens to address if caller is not a teacher or chairman",async function(){
+        const [owner,secondAddress,thirdAddress] = await ethers.getSigners();
+        await expect(tokenContract.connect(thirdAddress).mint(secondAddress.address,10)).to.be.revertedWith("Access granted to only the chairman or teacher");
+        console.log("passed..");
+    });
     it("Should mint tokens to stakeHolders Directors if caller is chairman or teacher",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress,eightAddress,ninthAddress,tenthAddress] = await ethers.getSigners();
         minted = await tokenContract.connect(owner).mintToStakeholder(20,"director",[eightAddress.address,secondAddress.address,tenthAddress.address]);
@@ -703,7 +708,7 @@ describe("Make Election Result Public ...",function(){
     it("Should not be able to Make Election Result Public if caller is not the chairman",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress] = await ethers.getSigners();
         console.log("\t","Attempting to  Make Election Result Public if caller is not the chairman");
-        await expect(votingContract.connect(fifthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman or teacher");
+        await expect(votingContract.connect(fifthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman, teacher or director");
         console.log('\t',"Passed ....")
     });
     it("Should be able to Make Election Result Public if caller is the chairman",async function(){
@@ -717,7 +722,7 @@ describe("Make Election Result Public ...",function(){
     it("Should not be able to Make Election Result Public if caller is not the teacher",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress] = await ethers.getSigners();
          console.log("\t","Attempting to  Make Election Result Public if caller is not the teacher");
-        await expect(votingContract.connect(fourthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman or teacher");
+        await expect(votingContract.connect(fourthAddress).makeResultPublic("senate")).to.be.revertedWith("Access granted to only the chairman, teacher or director");
         console.log('\t',"Passed ....")
     
     });
@@ -725,6 +730,15 @@ describe("Make Election Result Public ...",function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress] = await ethers.getSigners();
         console.log("\t","Attempting to  Make Election Result Public if caller is the teacher");
         makeresultpublic = await votingContract.connect(secondAddress).makeResultPublic("senate");
+        const tx = await makeresultpublic.wait();
+        expect(tx.status).to.equal(1);
+        console.log('\t',"Passed ....")
+    });
+    it("Should be able to Make Election Result Public if caller is the director",async function(){
+        const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress,eightAddress] = await ethers.getSigners();
+        console.log("\t","Attempting to  Make Election Result Public if caller is the director");
+        addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",3,[eightAddress.address]);
+        makeresultpublic = await votingContract.connect(eightAddress).makeResultPublic("senate");
         const tx = await makeresultpublic.wait();
         expect(tx.status).to.equal(1);
         console.log('\t',"Passed ....")
@@ -776,7 +790,7 @@ describe("Change Chairman role... and concensus voting",function(){
     before("Upload directors..",async function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress,eightAddress,ninthAddress,tenthAddress] = await ethers.getSigners();
          //add address as a stakeholder
-         addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",3,[eightAddress.address]);
+        //  addStakeholder = await votingContract.connect(owner).uploadStakeHolder("director",3,[eightAddress.address]);
          addStakeholder2 = await votingContract.connect(owner).uploadStakeHolder("director",3,[seventhAddress.address])
          addStakeholder3 = await votingContract.connect(owner).uploadStakeHolder("director",3,[tenthAddress.address])
        
@@ -821,12 +835,12 @@ describe("Change Chairman role... and concensus voting",function(){
         const [owner,secondAddress,thirdAddress,fourthAddress,fifthAddress,sixthAddress,seventhAddress,eightAddress,ninthAddress,tenthAddress] = await ethers.getSigners();
         console.log('\t',"Attempting to give consent twice....");
         //consent by directors
-        consent1 = await votingContract.connect(eightAddress).consensusVote();
-        await expect(votingContract.connect(eightAddress).consensusVote()).to.be.revertedWith("You have already consented..");
+        consent1 = await votingContract.connect(eightAddress).concensusVote();
+        await expect(votingContract.connect(eightAddress).concensusVote()).to.be.revertedWith("You have already consented..");
         console.log('\t',"Passed ....");
-        consent2 = await votingContract.connect(seventhAddress).consensusVote();
-        consent3 = await votingContract.connect(ninthAddress).consensusVote();
-        consent4 = await votingContract.connect(tenthAddress).consensusVote();
+        consent2 = await votingContract.connect(seventhAddress).concensusVote();
+        consent3 = await votingContract.connect(ninthAddress).concensusVote();
+        consent4 = await votingContract.connect(tenthAddress).concensusVote();
        
     });
     it("Should be able to Change Chairman role if caller is a director and a concensus have been reached...",async function(){

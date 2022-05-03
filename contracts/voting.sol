@@ -163,6 +163,14 @@ contract ZuriSchool {
         _;
     }
 
+    /// @notice modifier to check that only the chairman, teacher or director can call a function
+    modifier onlyGranted() {
+
+        /// @notice check that sender is the chairman
+        require ((msg.sender == chairman) || compareStrings(stakeholders[msg.sender].role,"teacher") || compareStrings(stakeholders[msg.sender].role,"director"), 
+        "Access granted to only the chairman, teacher or director");
+        _;
+    }
  
     /** @notice modifier to check that function can only be called after the votes have been counted */
     modifier onlyAfterVotesCounted(string memory _category) {
@@ -219,7 +227,7 @@ contract ZuriSchool {
     event VotesCountedEvent (string category,uint256 totalVotes);
 
     /** @notice emit event when concensus has been reached */
-    event ConsensusVote(address director,bool consent);
+    event ConcensusVote(address director,bool consent);
 
     
     /// --------------------------------------- FUNCTIONS ------------------------------------------- ///
@@ -241,13 +249,13 @@ contract ZuriSchool {
     * @notice director's consensus vote function
     * @dev can be called by only the director
     */
-    function consensusVote() public onlyDirector {
+    function concensusVote() public onlyDirector {
         require(hasConsented[msg.sender]==false,"You have already consented..");
         hasConsented[msg.sender]=true;
         consensus.push(msg.sender);
 
         /** @notice emit event of consesus results */
-        emit ConsensusVote(msg.sender,true);
+        emit ConcensusVote(msg.sender,true);
     }
     
     /** 
@@ -421,7 +429,7 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         
-         //update the activeElectionArrays
+        /**@notice update the activeElectionArrays */ 
         uint addressEntityIndex = activeModify[_category];
         activeElectionArrays[addressEntityIndex].VotingEnded =true;
        
@@ -527,7 +535,8 @@ contract ZuriSchool {
         activeElectionArrays[addressEntityIndex].VotesCounted =true;
         /** @notice update winner for the category */
         categoryWinner[_position]=candidates[winnerId];
-         //update allowedVoters for category
+
+        /**@notice update allowedVoters for category */ 
         string[] memory _allowedVoters = activeElections[_position].allowedVoters;
         for(uint256 i=0;i<_allowedVoters.length;i++){
             allowedVoters[_position][_allowedVoters[i]]=false;
@@ -547,12 +556,12 @@ contract ZuriSchool {
     * @notice only the chairman and teacher can make the election results public
     * @dev function cannot be called if contract is paused
     */
-    function makeResultPublic(string memory _category) public onlyAccess onlyWhenNotPaused returns(Candidate memory,string memory) {
+    function makeResultPublic(string memory _category) public onlyGranted onlyWhenNotPaused returns(Candidate memory,string memory) {
 
         /** @notice require that the category voting session is over before compiling votes */
         require(activeElections[_category].VotesCounted == true, "This session is still active, voting has not yet been counted");
 
-         uint addressEntityIndex = activeModify[_category];
+        uint addressEntityIndex = activeModify[_category];
         
         activeElectionArrays[addressEntityIndex].isResultPublic =true;
         activeElections[_category].isResultPublic = true;

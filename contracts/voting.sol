@@ -14,24 +14,28 @@ pragma solidity ^0.8.10;
 * @dev -9- Make results public
 */ 
 
-interface ZuriSchoolToken{
+/**
+* @author TeamB - Blockgames Internship 22
+* @title A Voting Dapp
+*/
+/**
+ *@notice Zuri token interface 
+ */
+
+ interface IZuriSchoolToken{
     /**
     * @dev balanceOf returns the number of token owned by the given address
     * @param owner - address to fetch number of token for
     * @return Returns the number of tokens owned
     */
     function balanceOf(address owner) external view returns (uint256);
-}
+ }
 
-/**
-* @author TeamB - Blockgames Internship 22
-* @title A Voting Dapp
-*/
 contract ZuriSchool {
 
     constructor(address _tokenAddr) {
-        zstoken = ZuriSchoolToken(_tokenAddr);
-            
+        zstoken = IZuriSchoolToken(_tokenAddr);
+        
         /** @notice add chairman is the deployer of the contract */
         chairman = msg.sender;
         
@@ -73,7 +77,7 @@ contract ZuriSchool {
 
     /// ---------------------------------------- VARIABLES ------------------------------------- ///
     /** @notice state variable for tokens */
-    ZuriSchoolToken public zstoken;
+    IZuriSchoolToken public zstoken;
 
     /** @notice declare state variable chairman */
     address public chairman;
@@ -102,7 +106,6 @@ contract ZuriSchool {
     /**@notice directors counter */
     uint256 directorsCount;
     
-
     /// ------------------------------------- MAPPING ------------------------------------------ ///
     /** @notice mapping for list of stakeholders addresses */
     mapping(address => Stakeholder) public stakeholders;
@@ -168,7 +171,7 @@ contract ZuriSchool {
         "Access granted to only the chairman, teacher or director");
         _;
     }
-       
+ 
     /** @notice modifier to check that function can only be called after the votes have been counted */
     modifier onlyAfterVotesCounted(string memory _category) {
 
@@ -297,7 +300,8 @@ contract ZuriSchool {
         
         for (uint i = 0; i < _address.length; i++) {
                  if(stakeholders[_address[i]].isRegistered ==false)
-                {stakeholders[_address[i]] = Stakeholder(_role, true, false, 0, votingPower ); }    
+                {stakeholders[_address[i]] = Stakeholder(_role, true, false, 0, votingPower ); } 
+                if(compareStrings(_role, "director")){directorsCount+=1;}   
         }
         
         /// @notice emit stakeholder registered event
@@ -400,11 +404,11 @@ contract ZuriSchool {
     */
     function startVotingSession(string memory _category) 
         public onlyChairman onlyWhenNotPaused {
-            require(activeModify[_category] >= 0, "no such category exist");
-                
+        require(Category[_category] > 0, "no such category exist");
+        
         /** @notice add election category to active elections */
         uint index = activeModify[_category];
-        activeElections[_category]=activeElectionArrays[index];
+         activeElections[_category]=activeElectionArrays[index];
 
          /** @notice update the activeElectionArrays */
          activeElectionArrays[index].VotingStarted=true;
@@ -425,15 +429,10 @@ contract ZuriSchool {
         public onlyChairman onlyWhenNotPaused {
         activeElections[_category].VotingEnded = true;
         
-         /** update the activeElectionArrays */
+        /**@notice update the activeElectionArrays */ 
         uint addressEntityIndex = activeModify[_category];
         activeElectionArrays[addressEntityIndex].VotingEnded =true;
-        
-        /** update allowedVoters for category */
-        string[] memory _allowedVoters = activeElections[_category].allowedVoters;
-        for(uint256 i=0;i<_allowedVoters.length;i++){
-            allowedVoters[_category][_allowedVoters[i]]=false;
-        }
+       
         /** @ notice emit event when voting ends */
         emit VotingEndedEvent(_category,true);
     }
@@ -446,17 +445,17 @@ contract ZuriSchool {
     */
     function vote(string memory _category, uint256 _candidateID) public onlyRegisteredStakeholder onlyWhenNotPaused returns (string memory, uint256) {
         
+        /** @notice check that the voter/stakeholder is qualified/eligible to vote for the category */
         require(allowedVoters[_category][stakeholders[msg.sender].role]==true,"You are not Qualified to vote for this category ");
         
         /** @notice require that the session for voting is active */
         require(activeElections[_category].VotingStarted ==true,"Voting has not commmenced for this Category");
         
         /** @notice require that the session for voting is not yet ended */
-        require(activeElections[_category].VotingEnded ==false,"Voting has not ended for this Category");
-        
+        require(activeElections[_category].VotingEnded ==false,"Voting has ended for this Category");
+       
         /** @notice check that votes are not duplicated */
         require(votedForCategory[Category[_category]][msg.sender]== false,"Cannot vote twice for a category..");
-        stakeholders[msg.sender].hasVoted = true;
 
         /** @notice check that balance of voter is greater than zero.. 1 token per votes */
         require(zstoken.balanceOf(msg.sender) >1*1e18,"YouR balance is currently not sufficient to vote. Not a stakeholder");
@@ -534,10 +533,15 @@ contract ZuriSchool {
         activeElections[_position].VotesCounted=true;
         uint addressEntityIndex = activeModify[_position];
         activeElectionArrays[addressEntityIndex].VotesCounted =true;
-    
         /** @notice update winner for the category */
         categoryWinner[_position]=candidates[winnerId];
-            return (totalVotes, winningVoteCount, items); 
+
+        /**@notice update allowedVoters for category */ 
+        string[] memory _allowedVoters = activeElections[_position].allowedVoters;
+        for(uint256 i=0;i<_allowedVoters.length;i++){
+            allowedVoters[_position][_allowedVoters[i]]=false;
+        }
+        return (totalVotes, winningVoteCount, items); 
     }
  
     /**
@@ -557,7 +561,7 @@ contract ZuriSchool {
         /** @notice require that the category voting session is over before compiling votes */
         require(activeElections[_category].VotesCounted == true, "This session is still active, voting has not yet been counted");
 
-         uint addressEntityIndex = activeModify[_category];
+        uint addressEntityIndex = activeModify[_category];
         
         activeElectionArrays[addressEntityIndex].isResultPublic =true;
         activeElections[_category].isResultPublic = true;
